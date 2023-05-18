@@ -5,7 +5,7 @@ import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-public class Menu extends javax.swing.JPanel {
+public final class Menu extends javax.swing.JPanel {
 
     public Menu() {
         initComponents();
@@ -21,14 +21,12 @@ public class Menu extends javax.swing.JPanel {
         menuList.addItem(new MenuModel("", "USER MANAGEMENT", MenuModel.MenuType.TITLE));
         menuList.addItem(new MenuModel("", "", MenuModel.MenuType.EMPTY));
         menuList.addItem(new MenuModel("person", "ADD USER", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("person", "REMOVE USER", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("person", "VIEW USERS", MenuModel.MenuType.MENU));
 
         menuList.addItem(new MenuModel("", "", MenuModel.MenuType.EMPTY));
         menuList.addItem(new MenuModel("", "BOOK MANAGEMENT", MenuModel.MenuType.TITLE));
         menuList.addItem(new MenuModel("", "", MenuModel.MenuType.EMPTY));
         menuList.addItem(new MenuModel("book", "ADD BOOK", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("book", "REMOVE BOOK", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("book", "VIEW BOOKS", MenuModel.MenuType.MENU));
         
         menuList.addItem(new MenuModel("", "", MenuModel.MenuType.EMPTY));

@@ -1,6 +1,8 @@
 package com.lbms.app.panels;
 
+import com.lbms.app.frames.LibrarianJFrame;
 import com.lbms.app.objects.MenuModel;
+import java.awt.CardLayout;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -15,6 +17,7 @@ public class MenuList<E extends Object> extends JList<E> {
 
     private final DefaultListModel model;
     private int selectedIndex = 0;
+    private CardLayout cardLayout;
 
     public MenuList() {
         model = new DefaultListModel();
