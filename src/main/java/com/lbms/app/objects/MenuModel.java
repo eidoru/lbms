@@ -5,6 +5,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class MenuModel {
+
     String icon;
     String name;
     MenuType type;

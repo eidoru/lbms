@@ -62,4 +62,6 @@ public class MenuList<E extends Object> extends JList<E> {
     public void addItem(MenuModel data) {
         model.addElement(data);
     }
+    
+    
 }

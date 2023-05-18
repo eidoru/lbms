@@ -21,6 +21,10 @@ public class LibrarianJFrame extends javax.swing.JFrame {
     public LibrarianJFrame() {
         initComponents();
     }
+    
+    public javax.swing.JPanel getContentPanel() {
+        return contentPanel;
+    }
 
     /**
      * This method is called from within the constructor to initialize the form.
