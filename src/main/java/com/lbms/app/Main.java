@@ -1,7 +1,7 @@
 package com.lbms.app;
 
 import com.formdev.flatlaf.FlatDarkLaf;
-import com.lbms.app.frames.LoginJFrame;
+import com.lbms.app.frame.LoginJFrame;
 import java.awt.Color;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;

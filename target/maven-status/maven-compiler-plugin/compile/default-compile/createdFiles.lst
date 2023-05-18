@@ -5,6 +5,7 @@ com\lbms\app\panels\MenuList$1.class
 com\lbms\app\frames\LoginJFrame.class
 com\lbms\app\frames\StudentJFrame.class
 com\lbms\app\panels\MenuItem$1.class
+com\lbms\app\frames\LibrarianJFrame$3.class
 com\lbms\app\panels\MenuList.class
 com\lbms\app\objects\User.class
 com\lbms\app\database\Database.class
@@ -13,8 +14,11 @@ com\lbms\app\frames\LoginJFrame$1.class
 com\lbms\app\frames\LibrarianJFrame$1.class
 com\lbms\app\objects\MenuModel.class
 com\lbms\app\panels\MenuList$2.class
+com\lbms\app\frames\LibrarianJFrame$4.class
 com\lbms\app\frames\LibrarianJFrame.class
 com\lbms\app\panels\MenuItem.class
 com\lbms\app\frames\LoginJFrame$2.class
+com\lbms\app\frames\LibrarianJFrame$5.class
+com\lbms\app\frames\LibrarianJFrame$2.class
 com\lbms\app\Main.class
 com\lbms\app\objects\Book.class
