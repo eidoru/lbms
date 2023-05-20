@@ -2,6 +2,7 @@ package com.lbms.app.database;
 
 import com.lbms.app.object.Request;
 import com.lbms.app.object.Book;
+import com.lbms.app.object.Borrow;
 import com.lbms.app.object.User;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -127,6 +128,42 @@ public class Database implements DatabaseMethods {
         }
         return null;
     }
+    
+    public ArrayList<Borrow> getBorrowers() {
+        ArrayList<Borrow> borrowers = new ArrayList<>();
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = connect.createStatement();
+            resultSet = statement.executeQuery("SELECT borrow.borrow_id, book.title, user.first_name, user.last_name, borrow.duration, borrow.start_date, borrow.end_date FROM borrow INNER JOIN book ON borrow.book_id=book.book_id INNER JOIN user ON borrow.user_id=user.user_id");
+            while (resultSet.next()) {
+                Borrow borrow = new Borrow();
+                borrow.setBorrowId(resultSet.getInt(1));
+                borrow.setBookTitle(resultSet.getString(2));
+                borrow.setUserFirstName(resultSet.getString(3));
+                borrow.setUserLastName(resultSet.getString(4));
+                borrow.setDuration(resultSet.getInt(5));
+                borrow.setStartDate(resultSet.getString(6));
+                borrow.setEndDate(resultSet.getString(7));
+                borrowers.add(borrow);
+            }
+            return borrowers;
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return null;
+    }
 
     public ArrayList<Request> getRequests() {
         ArrayList<Request> requests = new ArrayList<>();
@@ -134,13 +171,14 @@ public class Database implements DatabaseMethods {
         ResultSet resultSet = null;
         try {
             statement = connect.createStatement();
-            resultSet = statement.executeQuery("SELECT * FROM request");
+            resultSet = statement.executeQuery("SELECT request.request_id, book.title, user.first_name, user.last_name, request.duration FROM request INNER JOIN book on request.book_id=book.book_id INNER JOIN user ON request.user_id=user.user_id");
             while (resultSet.next()) {
                 Request request = new Request();
                 request.setRequestId(resultSet.getInt(1));
-                request.setBookId(resultSet.getInt(2));
-                request.setUserId(resultSet.getInt(3));
-                request.setDuration(resultSet.getInt(4));
+                request.setBookTitle(resultSet.getString(2));
+                request.setUserFirstName(resultSet.getString(3));
+                request.setUserLastName(resultSet.getString(4));
+                request.setDuration(resultSet.getInt(5));
                 requests.add(request);
             }
             return requests;
@@ -160,5 +198,4 @@ public class Database implements DatabaseMethods {
         }
         return null;
     }
-
 }

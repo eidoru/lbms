@@ -18,26 +18,28 @@
       <Group type="103" groupAlignment="0" attributes="0">
           <Group type="102" alignment="0" attributes="0">
               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-              <Component id="menuIcon" min="-2" max="-2" attributes="0"/>
+              <Component id="icon" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="20" max="-2" attributes="0"/>
-              <Component id="menuLabel" pref="100" max="32767" attributes="0"/>
+              <Component id="search" pref="635" max="32767" attributes="0"/>
           </Group>
       </Group>
     </DimensionLayout>
     <DimensionLayout dim="1">
       <Group type="103" groupAlignment="0" attributes="0">
-          <Component id="menuIcon" max="32767" attributes="0"/>
-          <Component id="menuLabel" alignment="0" pref="35" max="32767" attributes="0"/>
+          <Component id="icon" pref="50" max="32767" attributes="0"/>
+          <Component id="search" alignment="0" max="32767" attributes="0"/>
       </Group>
     </DimensionLayout>
   </Layout>
   <SubComponents>
-    <Component class="javax.swing.JLabel" name="menuIcon">
-    </Component>
-    <Component class="javax.swing.JLabel" name="menuLabel">
+    <Component class="javax.swing.JLabel" name="icon">
       <Properties>
-        <Property name="text" type="java.lang.String" value="Menu Name"/>
+        <Property name="icon" type="javax.swing.Icon" editor="org.netbeans.modules.form.editors2.IconEditor">
+          <Image iconType="3" name="/icons/search.png"/>
+        </Property>
       </Properties>
+    </Component>
+    <Component class="com.lbms.app.swing.SearchText" name="search">
     </Component>
   </SubComponents>
 </Form>

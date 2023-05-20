@@ -1,12 +1,12 @@
-package com.lbms.app.panel;
+package com.lbms.app.swing;
 
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 
-public class Content extends javax.swing.JPanel {
+public class ContentPanel extends javax.swing.JPanel {
 
-    public Content() {
+    public ContentPanel() {
         initComponents();
         setOpaque(false);
     }

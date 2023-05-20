@@ -6,9 +6,11 @@ import javax.swing.ImageIcon;
 
 public class MenuModel {
 
-    String icon;
-    String name;
-    MenuType type;
+    private String icon;
+    private String name;
+    private MenuType type;
+    
+    public MenuModel() {}
 
     public MenuModel(String icon, String name, MenuType type) {
         this.icon = icon;
@@ -21,7 +23,7 @@ public class MenuModel {
     }
     
     public static enum MenuType {
-        TITLE, MENU, EMPTY
+        MENU, EMPTY
     }
 
     public String getIcon() {

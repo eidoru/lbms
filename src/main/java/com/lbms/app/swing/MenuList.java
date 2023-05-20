@@ -1,4 +1,4 @@
-package com.lbms.app.panel;
+package com.lbms.app.swing;
 
 import com.lbms.app.event.MenuItemSelectEvent;
 import com.lbms.app.object.MenuModel;
@@ -11,16 +11,16 @@ import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
 
-@SuppressWarnings("unchecked")
 public class MenuList<E extends Object> extends JList<E> {
-
+    
     private MenuItemSelectEvent event;
     private final DefaultListModel model;
     private int selectedIndex = 0;
-
+    
     public MenuList() {
         model = new DefaultListModel();
-        setModel(model);
+        super.setModel(model);
+        setOpaque(false);
         addMouseListener(new MouseAdapter() {
             @Override
             public void mousePressed(MouseEvent e) {
@@ -34,20 +34,22 @@ public class MenuList<E extends Object> extends JList<E> {
     }
     
     public void onSelect(MouseEvent e) {
-        if (SwingUtilities.isLeftMouseButton(e)) {
-            int index = locationToIndex(e.getPoint());
-            Object object = model.getElementAt(index);
-            if (object instanceof MenuModel) {
-                MenuModel menu = (MenuModel) object;
-                if (menu.getType() == MenuModel.MenuType.MENU) {
-                    selectedIndex = index;
-                    if (event != null) {
-                        event.selected(index);
-                    }
-                }
-                repaint();
+        if (!SwingUtilities.isLeftMouseButton(e)) {
+            return;
+        }
+        int index = locationToIndex(e.getPoint());
+        Object object = model.getElementAt(index);
+        if (!(object instanceof MenuModel)) {
+            return;
+        }
+        MenuModel menu = (MenuModel) object;
+        if (menu.getType() == MenuModel.MenuType.MENU) {
+            selectedIndex = index;
+            if (event != null) {
+                event.selected(index);
             }
         }
+        repaint();
     }
 
     @Override
@@ -59,7 +61,7 @@ public class MenuList<E extends Object> extends JList<E> {
                 if (value instanceof MenuModel) {
                     data = (MenuModel) value;
                 } else {
-                    data = new MenuModel("", value + "", MenuModel.MenuType.EMPTY);
+                    data = new MenuModel("person", value + "", MenuModel.MenuType.MENU);
                 }
                 MenuItem item = new MenuItem(data);
                 item.setSelected(selectedIndex == index);
@@ -68,9 +70,14 @@ public class MenuList<E extends Object> extends JList<E> {
         };
     }
 
+//    @Override
+//    public void setModel(ListModel<E> listModel) {
+//        for (int i = 0; i < listModel.getSize(); i++) {
+//            model.addElement(listModel.getElementAt(i));
+//        }
+//    }
+    
     public void addItem(MenuModel data) {
         model.addElement(data);
     }
-    
-    
 }
