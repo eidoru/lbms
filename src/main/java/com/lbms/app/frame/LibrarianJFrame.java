@@ -131,7 +131,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         }
         Object[] object = new Object[5];
         for (Request request : requests) {
-            object[0] = request.getRequestId();
+            object[0] = request.getId();
             object[1] = request.getBookTitle();
             object[2] = request.getUserFirstName();
             object[3] = request.getUserLastName();

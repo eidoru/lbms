@@ -4,7 +4,7 @@ public class Request {
 
     private int bookId;
     private int duration;
-    private int requestId;
+    private int id;
     private int userId;
     private String bookTitle;
     private String userFirstName;
@@ -14,14 +14,14 @@ public class Request {
     }
 
     public Request(int requestId, int bookId, int userId, int duration) {
-        this.requestId = requestId;
+        this.id = requestId;
         this.bookId = bookId;
         this.userId = userId;
         this.duration = duration;
     }
 
     public Request(int requestId, String bookTitle, String userFirstName, String userLastName, int duration) {
-        this.requestId = requestId;
+        this.id = requestId;
         this.bookTitle = bookTitle;
         this.userFirstName = userFirstName;
         this.userLastName = userLastName;
@@ -43,12 +43,12 @@ public class Request {
         this.duration = duration;
     }
 
-    public int getRequestId() {
-        return requestId;
+    public int getId() {
+        return id;
     }
 
-    public void setRequestId(int requestId) {
-        this.requestId = requestId;
+    public void setId(int id) {
+        this.id = id;
     }
 
     public int getUserId() {
