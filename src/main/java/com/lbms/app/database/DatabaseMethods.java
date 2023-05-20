@@ -10,4 +10,9 @@ public interface DatabaseMethods {
     public ArrayList<User> getUsers();
     public ArrayList<Book> getBooks();
     public ArrayList<Request> getRequests();
+    public int getTableId(String table, String id);
+    public void resetAutoIncrement(String table);
+    public boolean insertUser(User user);
+    public boolean insertBook(Book book);
+    public boolean insertRequest(Request request, String table);
 }

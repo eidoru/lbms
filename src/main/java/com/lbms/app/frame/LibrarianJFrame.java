@@ -6,14 +6,16 @@ package com.lbms.app.frame;
 
 import com.lbms.app.database.Database;
 import com.lbms.app.object.Book;
+import com.lbms.app.object.Borrow;
 import com.lbms.app.object.Request;
 import com.lbms.app.object.User;
 import java.awt.CardLayout;
-import java.awt.Component;
-import java.awt.Container;
 import java.util.ArrayList;
+import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -24,19 +26,78 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
 
     private DefaultTableModel model;
     private final Database database;
-
-    /**
-     * Creates new form LibrarianJFrame
-     */
-    public LibrarianJFrame() {
+    private static int loggedId;
+    
+    public LibrarianJFrame(int userId) {
+        loggedId = userId;
         database = new Database();
 
         // init methods
         initComponents();
         initTables();
 
+        // init events
         onMenuItemSelect();
         onLogoutSelect();
+
+        // init id listeners
+        userIdField.setText(String.valueOf(database.getTableId("user", "user_id")));
+        bookIdField.setText(String.valueOf(database.getTableId("book", "book_id")));
+
+        // checks for filled fields to enable add button
+        bindTextFields(addUserButton, passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
+        bindTextFields(addBookButton, titleField, authorField, isbnField);
+        System.out.println(loggedId);
+    }
+
+    public void bindTextFields(JButton button, JTextField... textFields) {
+        for (JTextField textField : textFields) {
+            textField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    updateButtonEnabledState();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    updateButtonEnabledState();
+                }
+
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    updateButtonEnabledState();
+                }
+
+                private void updateButtonEnabledState() {
+                    boolean enableButton = true;
+                    for (JTextField textField : textFields) {
+                        if (textField.getText().isEmpty()) {
+                            enableButton = false;
+                            break;
+                        }
+                    }
+                    button.setEnabled(enableButton);
+                }
+            });
+        }
+    }
+
+//    public boolean checkEmptyFields(JTextField... textFields) {
+//        for (JTextField textField : textFields) {
+//            if (textField.getText().isEmpty()) {
+//                JOptionPane.showMessageDialog(null, "Please enter the remaining fields!");
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+    public void emptyFields(JTextField... textFields) {
+        for (JTextField textField : textFields) {
+            if (textField.equals(userIdField)) {
+                continue;
+            }
+            textField.setText("");
+        }
     }
 
     public void onLogoutSelect() {
@@ -73,10 +134,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         viewUserTable();
         viewBookTable();
         viewRequestTable();
+        viewBorrowTable();
     }
 
     public void viewUserTable() {
         model = (DefaultTableModel) userTable.getModel();
+        model.setRowCount(0);
         ArrayList<User> users = database.getUsers();
         if (users == null) {
             return;
@@ -103,6 +166,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
 
     public void viewBookTable() {
         model = (DefaultTableModel) bookTable.getModel();
+        model.setRowCount(0);
         ArrayList<Book> books = database.getBooks();
         if (books == null) {
             return;
@@ -125,6 +189,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
 
     public void viewRequestTable() {
         model = (DefaultTableModel) requestTable.getModel();
+        model.setRowCount(0);
         ArrayList<Request> requests = database.getRequests();
         if (requests == null) {
             return;
@@ -136,6 +201,26 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             object[2] = request.getUserFirstName();
             object[3] = request.getUserLastName();
             object[4] = request.getDuration();
+            model.addRow(object);
+        }
+    }
+
+    public void viewBorrowTable() {
+        model = (DefaultTableModel) borrowTable.getModel();
+        model.setRowCount(0);
+        ArrayList<Borrow> borrowers = database.getBorrowers();
+        if (borrowers == null) {
+            return;
+        }
+        Object[] object = new Object[7];
+        for (Borrow borrow : borrowers) {
+            object[0] = borrow.getId();
+            object[1] = borrow.getBookTitle();
+            object[2] = borrow.getUserFirstName();
+            object[3] = borrow.getUserLastName();
+            object[4] = borrow.getDuration();
+            object[5] = borrow.getStartDate();
+            object[6] = borrow.getEndDate();
             model.addRow(object);
         }
     }
@@ -169,8 +254,8 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         card3 = new com.lbms.app.swing.ContentPanel();
         card3Search = new com.lbms.app.swing.SearchBar();
         card3ReturnBook = new javax.swing.JButton();
-        bookScrollPane1 = new javax.swing.JScrollPane();
-        bookTable1 = new com.lbms.app.swing.Table();
+        borrowScrollPane = new javax.swing.JScrollPane();
+        borrowTable = new com.lbms.app.swing.Table();
         card4 = new com.lbms.app.swing.ContentPanel();
         card4Search = new com.lbms.app.swing.SearchBar();
         card4ApproveRequestButton = new javax.swing.JButton();
@@ -200,7 +285,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         studentRadioButton = new javax.swing.JRadioButton();
         librarianRadioButton = new javax.swing.JRadioButton();
         addUserButton = new javax.swing.JButton();
-        addUserButton1 = new javax.swing.JButton();
+        cancelUserButton = new javax.swing.JButton();
         card_bookadd = new com.lbms.app.swing.ContentPanel();
         bookIdLabel = new javax.swing.JLabel();
         bookIdField = new javax.swing.JTextField();
@@ -211,7 +296,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         isbnLabel = new javax.swing.JLabel();
         isbnField = new javax.swing.JTextField();
         addBookButton = new javax.swing.JButton();
-        addBookButton1 = new javax.swing.JButton();
+        cancelBookButton = new javax.swing.JButton();
 
         card2AddUser1.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         card2AddUser1.setText("Add User");
@@ -398,7 +483,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
 
-        bookTable1.setModel(new javax.swing.table.DefaultTableModel(
+        borrowTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
 
             },
@@ -414,15 +499,15 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 return canEdit [columnIndex];
             }
         });
-        bookScrollPane1.setViewportView(bookTable1);
-        if (bookTable1.getColumnModel().getColumnCount() > 0) {
-            bookTable1.getColumnModel().getColumn(0).setResizable(false);
-            bookTable1.getColumnModel().getColumn(1).setResizable(false);
-            bookTable1.getColumnModel().getColumn(2).setResizable(false);
-            bookTable1.getColumnModel().getColumn(3).setResizable(false);
-            bookTable1.getColumnModel().getColumn(4).setResizable(false);
-            bookTable1.getColumnModel().getColumn(5).setResizable(false);
-            bookTable1.getColumnModel().getColumn(6).setResizable(false);
+        borrowScrollPane.setViewportView(borrowTable);
+        if (borrowTable.getColumnModel().getColumnCount() > 0) {
+            borrowTable.getColumnModel().getColumn(0).setResizable(false);
+            borrowTable.getColumnModel().getColumn(1).setResizable(false);
+            borrowTable.getColumnModel().getColumn(2).setResizable(false);
+            borrowTable.getColumnModel().getColumn(3).setResizable(false);
+            borrowTable.getColumnModel().getColumn(4).setResizable(false);
+            borrowTable.getColumnModel().getColumn(5).setResizable(false);
+            borrowTable.getColumnModel().getColumn(6).setResizable(false);
         }
 
         javax.swing.GroupLayout card3Layout = new javax.swing.GroupLayout(card3);
@@ -437,7 +522,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(card3Layout.createSequentialGroup()
                         .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(bookScrollPane1)
+                            .addComponent(borrowScrollPane)
                             .addComponent(card3Search, javax.swing.GroupLayout.DEFAULT_SIZE, 950, Short.MAX_VALUE))
                         .addGap(25, 25, 25))))
         );
@@ -447,7 +532,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addComponent(card3Search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
-                .addComponent(bookScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
                 .addComponent(card3ReturnBook, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
@@ -544,7 +629,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
 
         yearLevelLabel.setText("Year level");
 
-        yearLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "1", "2", "3", "4" }));
+        yearLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "None", "1", "2", "3", "4" }));
 
         userTypeLabel.setText("User Type");
 
@@ -556,16 +641,17 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         librarianRadioButton.setText("Librarian");
 
         addUserButton.setText("ADD");
+        addUserButton.setEnabled(false);
         addUserButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 addUserButtonActionPerformed(evt);
             }
         });
 
-        addUserButton1.setText("CANCEL");
-        addUserButton1.addActionListener(new java.awt.event.ActionListener() {
+        cancelUserButton.setText("CANCEL");
+        cancelUserButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addUserButton1ActionPerformed(evt);
+                cancelUserButtonActionPerformed(evt);
             }
         });
 
@@ -577,7 +663,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(addUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addUserButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cancelUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(card_useraddLayout.createSequentialGroup()
                         .addComponent(studentRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
@@ -655,7 +741,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
                 .addComponent(addUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
-                .addComponent(addUserButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cancelUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
@@ -672,11 +758,17 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         isbnLabel.setText("ISBN");
 
         addBookButton.setText("ADD");
-
-        addBookButton1.setText("CANCEL");
-        addBookButton1.addActionListener(new java.awt.event.ActionListener() {
+        addBookButton.setEnabled(false);
+        addBookButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                addBookButton1ActionPerformed(evt);
+                addBookButtonActionPerformed(evt);
+            }
+        });
+
+        cancelBookButton.setText("CANCEL");
+        cancelBookButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                cancelBookButtonActionPerformed(evt);
             }
         });
 
@@ -687,7 +779,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             .addGroup(card_bookaddLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addGroup(card_bookaddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(addBookButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(cancelBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(isbnField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(isbnLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -721,7 +813,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 390, Short.MAX_VALUE)
                 .addComponent(addBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
-                .addComponent(addBookButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(cancelBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
@@ -761,27 +853,49 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_card2AddUser1ActionPerformed
 
-    private void addBookButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addBookButton1ActionPerformed
+    private void cancelBookButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBookButtonActionPerformed
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         cardLayout.show(contentPanel, "card2");
-    }//GEN-LAST:event_addBookButton1ActionPerformed
+        emptyFields(titleField, authorField, isbnField);
+        viewBookTable();
+    }//GEN-LAST:event_cancelBookButtonActionPerformed
 
-    private void addUserButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addUserButton1ActionPerformed
+    private void cancelUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelUserButtonActionPerformed
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         cardLayout.show(contentPanel, "card1");
-    }//GEN-LAST:event_addUserButton1ActionPerformed
+        emptyFields(passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
+        viewUserTable();
+    }//GEN-LAST:event_cancelUserButtonActionPerformed
 
     private void addUserButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addUserButtonActionPerformed
-        Container contentPane = super.getContentPane();
-        for (Component component : contentPane.getComponents()) {
-            if (component instanceof JTextField) {
-                JTextField textField = (JTextField) component;
-                if (textField.getText().isEmpty()) {
-                    JOptionPane.showMessageDialog(null, "Please enter the remaining fields!");
-                    return;
-                }
-            }
+
+        if (studentRadioButton.isSelected() && (courseCombo.getSelectedItem().toString().equals("None") || yearLevelCombo.getSelectedItem().toString().equals("None"))) {
+            JOptionPane.showMessageDialog(null, "Please select a course and year!");
+            return;
         }
+        
+        if (librarianRadioButton.isSelected() && (!courseCombo.getSelectedItem().toString().equals("None") || !yearLevelCombo.getSelectedItem().toString().equals("None"))) {
+            JOptionPane.showMessageDialog(null, "Choose 'None' and '0' for both course and year for librarian!");
+            return;
+        }
+
+        int userId = Integer.parseInt(userIdField.getText());
+        String password = new String(passwordField.getPassword());
+        String firstname = firstNameField.getText();
+        String lastname = lastNameField.getText();
+        String email = emailField.getText();
+        String address = addressField.getText();
+        String contactNumber = contactField.getText();
+        String course = (courseCombo.getSelectedItem().toString().equals("None")) ? "None" : (String) courseCombo.getSelectedItem();
+        int yearLevel = (yearLevelCombo.getSelectedItem().toString().equals("None")) ? 0 : Integer.parseInt((String) yearLevelCombo.getSelectedItem());
+        int userType = (librarianRadioButton.isSelected()) ? 1 : 0;
+
+        User user = new User(userId, password, firstname, lastname, email, address, contactNumber, course, yearLevel, userType);
+
+        database.insertUser(user);
+        userIdField.setText(Integer.toString(database.getTableId("user", "user_id")));
+        JOptionPane.showMessageDialog(null, "User has been added to the database!");
+        emptyFields(passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
     }//GEN-LAST:event_addUserButtonActionPerformed
 
     private void card2RemoveBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card2RemoveBookActionPerformed
@@ -805,6 +919,22 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
     private void card3ReturnBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card3ReturnBookActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_card3ReturnBookActionPerformed
+
+    private void addBookButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addBookButtonActionPerformed
+
+        int id = Integer.parseInt(bookIdField.getText());
+        String title = titleField.getText();
+        String author = authorField.getText();
+        String isbn = isbnField.getText();
+        int status = 0;
+        
+        Book book = new Book(id, title, author, isbn, status);
+        
+        database.insertBook(book);
+        bookIdField.setText(Integer.toString(database.getTableId("book", "book_id")));
+        JOptionPane.showMessageDialog(null, "Book has been added to the database!");
+        emptyFields(titleField, authorField, isbnField);
+    }//GEN-LAST:event_addBookButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -836,16 +966,14 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new LibrarianJFrame().setVisible(true);
+                new LibrarianJFrame(loggedId).setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addBookButton;
-    private javax.swing.JButton addBookButton1;
     private javax.swing.JButton addUserButton;
-    private javax.swing.JButton addUserButton1;
     private javax.swing.JTextField addressField;
     private javax.swing.JLabel addressLabel;
     private javax.swing.JTextField authorField;
@@ -853,10 +981,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
     private javax.swing.JTextField bookIdField;
     private javax.swing.JLabel bookIdLabel;
     private javax.swing.JScrollPane bookScrollPane;
-    private javax.swing.JScrollPane bookScrollPane1;
     private com.lbms.app.swing.Table bookTable;
-    private com.lbms.app.swing.Table bookTable1;
+    private javax.swing.JScrollPane borrowScrollPane;
+    private com.lbms.app.swing.Table borrowTable;
     private javax.swing.ButtonGroup buttonGroup1;
+    private javax.swing.JButton cancelBookButton;
+    private javax.swing.JButton cancelUserButton;
     private com.lbms.app.swing.ContentPanel card1;
     private javax.swing.JButton card1AddUser;
     private javax.swing.JButton card1RemoveUser;

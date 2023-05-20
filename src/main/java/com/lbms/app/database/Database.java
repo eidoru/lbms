@@ -145,8 +145,8 @@ public class Database implements DatabaseMethods {
                 borrow.setUserFirstName(resultSet.getString(3));
                 borrow.setUserLastName(resultSet.getString(4));
                 borrow.setDuration(resultSet.getInt(5));
-                borrow.setStartDate(resultSet.getString(6));
-                borrow.setEndDate(resultSet.getString(7));
+                borrow.setStartDate(resultSet.getDate(6).toString());
+                borrow.setEndDate(resultSet.getDate(7).toString());
                 borrowers.add(borrow);
             }
             return borrowers;
@@ -233,7 +233,7 @@ public class Database implements DatabaseMethods {
         Statement statement = null;
         try {
             statement = connect.createStatement();
-            statement.executeUpdate("ALTER TABLE" + table + " AUTO_INCREMENT = 0");
+            statement.executeUpdate("ALTER TABLE " + table + " AUTO_INCREMENT = 0");
         } catch (SQLException e) {
             Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
         } finally {

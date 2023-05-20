@@ -90,12 +90,12 @@ public class LoginJFrame extends javax.swing.JFrame {
         switch (database.login(userId, password)) {
             case 0 -> {
                 dispose();
-                StudentJFrame studentJFrame = new StudentJFrame();
+                StudentJFrame studentJFrame = new StudentJFrame(userId);
                 studentJFrame.setVisible(true);
             }
             case 1 -> {
                 dispose();
-                LibrarianJFrame librarianJFrame = new LibrarianJFrame();
+                LibrarianJFrame librarianJFrame = new LibrarianJFrame(userId);
                 librarianJFrame.setVisible(true);
             }
             default -> {
