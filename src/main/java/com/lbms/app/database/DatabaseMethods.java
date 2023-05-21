@@ -18,5 +18,5 @@ public interface DatabaseMethods {
     public void resetAutoIncrement(String table);
     public boolean insertUser(User user);
     public boolean insertBook(Book book);
-    public boolean insertRequest(Request request, String table);
+    public <E> boolean insertRequest(E request, String table);
 }

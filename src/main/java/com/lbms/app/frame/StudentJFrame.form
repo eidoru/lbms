@@ -56,10 +56,7 @@
                   <EmptySpace min="-2" pref="0" max="-2" attributes="0"/>
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Component id="contentPanel" max="32767" attributes="0"/>
-                      <Group type="102" alignment="0" attributes="0">
-                          <Component id="menu" pref="0" max="32767" attributes="0"/>
-                          <EmptySpace min="5" pref="5" max="-2" attributes="0"/>
-                      </Group>
+                      <Component id="menu" alignment="0" pref="0" max="32767" attributes="0"/>
                   </Group>
               </Group>
           </Group>
@@ -107,11 +104,11 @@
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                           <Component id="bookSearchBar" min="-2" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                          <Component id="bookScrollPane" pref="612" max="32767" attributes="0"/>
-                          <EmptySpace pref="24" max="32767" attributes="0"/>
+                          <Component id="bookScrollPane" pref="610" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="borrowButton" alignment="3" pref="39" max="32767" attributes="0"/>
-                              <Component id="reserveButton" alignment="3" pref="39" max="32767" attributes="0"/>
+                              <Component id="borrowButton" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
+                              <Component id="reserveButton" alignment="3" min="-2" pref="40" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                       </Group>
@@ -186,7 +183,11 @@
                       <Font name="SF Pro Text Light" size="12" style="0"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="BORROW"/>
+                    <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
+                  <Events>
+                    <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="borrowButtonActionPerformed"/>
+                  </Events>
                 </Component>
                 <Component class="javax.swing.JButton" name="reserveButton">
                   <Properties>
@@ -194,6 +195,7 @@
                       <Font name="SF Pro Text Light" size="12" style="0"/>
                     </Property>
                     <Property name="text" type="java.lang.String" value="RESERVE"/>
+                    <Property name="enabled" type="boolean" value="false"/>
                   </Properties>
                   <Events>
                     <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="reserveButtonActionPerformed"/>
@@ -297,23 +299,28 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="0" attributes="0">
-                              <Component id="contactEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="contactEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="addressEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="addressEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="emailEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="emailEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="lastNameEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="lastNameEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="firstNameEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="firstNameEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="passwordEditField" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="passwordEditLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="profileConfirmButton" min="-2" pref="300" max="-2" attributes="0"/>
-                              <Component id="profileCancelButton" min="-2" pref="300" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="contactEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="contactEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="addressEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="addressEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="emailEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="emailEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="lastNameEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="lastNameEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="firstNameEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="firstNameEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="passwordEditField" alignment="0" max="32767" attributes="0"/>
+                              <Component id="passwordEditLabel" alignment="0" max="32767" attributes="0"/>
+                              <Component id="profileConfirmButton" alignment="0" max="32767" attributes="0"/>
+                              <Component id="updateLabel" alignment="0" min="-2" pref="300" max="-2" attributes="0"/>
                           </Group>
-                          <EmptySpace pref="675" max="32767" attributes="0"/>
+                          <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="borrowedLabel" max="32767" attributes="0"/>
+                              <Component id="borrowScrollPane" pref="625" max="32767" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
@@ -321,47 +328,47 @@
                   <Group type="103" groupAlignment="0" attributes="0">
                       <Group type="102" alignment="0" attributes="0">
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
-                          <Component id="passwordEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="passwordEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="firstNameEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="firstNameEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="lastNameEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="lastNameEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="emailEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="emailEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="addressEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="addressEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="contactEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="contactEditField" min="-2" pref="25" max="-2" attributes="0"/>
-                          <EmptySpace pref="252" max="32767" attributes="0"/>
-                          <Component id="profileConfirmButton" min="-2" pref="39" max="-2" attributes="0"/>
-                          <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
-                          <Component id="profileCancelButton" min="-2" pref="39" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" max="-2" attributes="0">
+                              <Component id="updateLabel" pref="25" max="32767" attributes="0"/>
+                              <Component id="borrowedLabel" max="32767" attributes="0"/>
+                          </Group>
+                          <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Group type="102" attributes="0">
+                                  <Component id="passwordEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="passwordEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="firstNameEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="firstNameEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="lastNameEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="lastNameEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="emailEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="emailEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="addressEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="addressEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="contactEditLabel" min="-2" pref="25" max="-2" attributes="0"/>
+                                  <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
+                                  <Component id="contactEditField" min="-2" pref="25" max="-2" attributes="0"/>
+                              </Group>
+                              <Component id="borrowScrollPane" min="-2" pref="410" max="-2" attributes="0"/>
+                          </Group>
+                          <EmptySpace pref="250" max="32767" attributes="0"/>
+                          <Component id="profileConfirmButton" min="-2" pref="40" max="-2" attributes="0"/>
                           <EmptySpace min="-2" pref="25" max="-2" attributes="0"/>
                       </Group>
                   </Group>
                 </DimensionLayout>
               </Layout>
               <SubComponents>
-                <Component class="javax.swing.JButton" name="profileCancelButton">
-                  <Properties>
-                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
-                      <Font name="SF Pro Text Light" size="12" style="0"/>
-                    </Property>
-                    <Property name="text" type="java.lang.String" value="CANCEL"/>
-                  </Properties>
-                </Component>
                 <Component class="javax.swing.JButton" name="profileConfirmButton">
                   <Properties>
                     <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
@@ -382,6 +389,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JPasswordField" name="passwordEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="firstNameEditLabel">
                   <Properties>
@@ -392,6 +404,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="firstNameEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="lastNameEditLabel">
                   <Properties>
@@ -402,6 +419,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="lastNameEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="emailEditLabel">
                   <Properties>
@@ -412,6 +434,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="emailEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="addressEditLabel">
                   <Properties>
@@ -422,6 +449,11 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="addressEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
                 </Component>
                 <Component class="javax.swing.JLabel" name="contactEditLabel">
                   <Properties>
@@ -432,6 +464,77 @@
                   </Properties>
                 </Component>
                 <Component class="javax.swing.JTextField" name="contactEditField">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="12" style="0"/>
+                    </Property>
+                  </Properties>
+                </Component>
+                <Component class="javax.swing.JLabel" name="borrowedLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="18" style="0"/>
+                    </Property>
+                    <Property name="horizontalAlignment" type="int" value="2"/>
+                    <Property name="text" type="java.lang.String" value="Borrowed Books"/>
+                  </Properties>
+                </Component>
+                <Container class="javax.swing.JScrollPane" name="borrowScrollPane">
+                  <AuxValues>
+                    <AuxValue name="autoScrollPane" type="java.lang.Boolean" value="true"/>
+                  </AuxValues>
+
+                  <Layout class="org.netbeans.modules.form.compat2.layouts.support.JScrollPaneSupportLayout"/>
+                  <SubComponents>
+                    <Component class="com.lbms.app.swing.Table" name="borrowTable">
+                      <Properties>
+                        <Property name="model" type="javax.swing.table.TableModel" editor="org.netbeans.modules.form.editors2.TableModelEditor">
+                          <Table columnCount="4" rowCount="0">
+                            <Column editable="false" title="Book ID" type="java.lang.Object"/>
+                            <Column editable="false" title="Title" type="java.lang.Object"/>
+                            <Column editable="false" title="Start Date" type="java.lang.Object"/>
+                            <Column editable="false" title="End Date" type="java.lang.Object"/>
+                          </Table>
+                        </Property>
+                        <Property name="columnModel" type="javax.swing.table.TableColumnModel" editor="org.netbeans.modules.form.editors2.TableColumnModelEditor">
+                          <TableColumnModel selectionModel="0">
+                            <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                              <Title/>
+                              <Editor/>
+                              <Renderer/>
+                            </Column>
+                            <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                              <Title/>
+                              <Editor/>
+                              <Renderer/>
+                            </Column>
+                            <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                              <Title/>
+                              <Editor/>
+                              <Renderer/>
+                            </Column>
+                            <Column maxWidth="-1" minWidth="-1" prefWidth="-1" resizable="true">
+                              <Title/>
+                              <Editor/>
+                              <Renderer/>
+                            </Column>
+                          </TableColumnModel>
+                        </Property>
+                        <Property name="rowSelectionAllowed" type="boolean" value="false"/>
+                        <Property name="tableHeader" type="javax.swing.table.JTableHeader" editor="org.netbeans.modules.form.editors2.JTableHeaderEditor">
+                          <TableHeader reorderingAllowed="false" resizingAllowed="false"/>
+                        </Property>
+                      </Properties>
+                    </Component>
+                  </SubComponents>
+                </Container>
+                <Component class="javax.swing.JLabel" name="updateLabel">
+                  <Properties>
+                    <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+                      <Font name="SF Pro Text Light" size="18" style="0"/>
+                    </Property>
+                    <Property name="text" type="java.lang.String" value="Update Profile"/>
+                  </Properties>
                 </Component>
               </SubComponents>
             </Container>

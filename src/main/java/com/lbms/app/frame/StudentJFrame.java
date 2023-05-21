@@ -2,17 +2,20 @@ package com.lbms.app.frame;
 
 import com.lbms.app.database.Database;
 import com.lbms.app.object.Book;
+import com.lbms.app.object.Borrow;
 import com.lbms.app.object.Overdue;
 import com.lbms.app.object.User;
+import com.lbms.app.swing.SearchBar;
 import java.awt.CardLayout;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 
-public class StudentJFrame extends javax.swing.JFrame {
+public final class StudentJFrame extends javax.swing.JFrame {
 
     private DefaultTableModel model;
     private final Database database;
@@ -21,8 +24,8 @@ public class StudentJFrame extends javax.swing.JFrame {
     public StudentJFrame(int userId) {
         database = new Database();
         loggedId = userId;
-
-        System.out.println(loggedId);
+        
+        setTitle(database.getCurrentUser(userId).getFirstName());
 
         // init methods
         initComponents();
@@ -31,8 +34,10 @@ public class StudentJFrame extends javax.swing.JFrame {
         // init events
         onMenuItemSelect();
         onLogoutSelect();
+        onSearchListener(bookSearchBar, overdueSearchBar);
 
         // init listeners
+        bookRowSelectionListener();
     }
 
     public void onLogoutSelect() {
@@ -53,13 +58,15 @@ public class StudentJFrame extends javax.swing.JFrame {
             switch (index) {
                 case 0 -> {
                     cardLayout.show(contentPanel, "card1");
-                    System.out.println(index);
                     viewBookTable();
                 }
                 case 1 -> {
                     cardLayout.show(contentPanel, "card2");
-                    System.out.println(index);
-                    viewOverdueTable();
+                    viewMyOverdueTable();
+                }
+                case 2 -> {
+                    cardLayout.show(contentPanel, "card3");
+                    viewMyBorrowTable();
                 }
             }
         });
@@ -68,6 +75,87 @@ public class StudentJFrame extends javax.swing.JFrame {
     public void emptyFields(JTextField... textFields) {
         for (JTextField textField : textFields) {
             textField.setText("");
+        }
+    }
+
+    public void displayBookTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) bookTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Book> books = database.displayBookSearch(keywords);
+        Object[] data = new Object[5];
+        for (Book book : books) {
+            data[0] = book.getBookId();
+            data[1] = book.getTitle();
+            data[2] = book.getAuthor();
+            data[3] = book.getIsbn();
+            data[4] = book.getStatus();
+            model.addRow(data);
+        }
+    }
+
+    public void displayOverdueTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) overdueTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Overdue> overdues = database.displayOverdueSearch(keywords);
+        Object[] data = new Object[5];
+        for (Overdue overdue : overdues) {
+            data[0] = overdue.getOverdueId();
+            data[1] = overdue.getBookTitle();
+            data[2] = overdue.getUserFirstName();
+            data[3] = overdue.getUserLastName();
+            data[4] = overdue.getFine();
+            model.addRow(data);
+        }
+    }
+
+    public void onBorrowEvent() {
+        borrowButton.setEnabled(false);
+        reserveButton.setEnabled(true);
+    }
+
+    public void bookRowSelectionListener() {
+        bookTable.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+            if (e.getValueIsAdjusting()) {
+                return;
+            }
+            int index = bookTable.getSelectedRow();
+            if (index == -1) {
+                return;
+            }
+            int bookId = Integer.parseInt(bookTable.getValueAt(index, 0).toString());
+            String status = bookTable.getValueAt(index, 4).toString();
+            if (database.hasRequest(bookId)) {
+                borrowButton.setEnabled(false);
+                reserveButton.setEnabled(true);
+            } else if ("Borrowed".equals(status)) {
+                borrowButton.setEnabled(false);
+                reserveButton.setEnabled(true);
+            } else {
+                borrowButton.setEnabled(true);
+                reserveButton.setEnabled(false);
+            }
+        });
+    }
+
+    public void onSearchListener(SearchBar... searchBars) {
+        for (SearchBar searchBar : searchBars) {
+            searchBar.setSearchEvent(() -> {
+                String input = searchBar.getText().toLowerCase();
+                if (input.length() == 0) {
+                    return;
+                }
+                String[] keywords = input.split(" ");
+                if (searchBar.equals(bookSearchBar)) {
+                    displayBookTableOnSearch(keywords);
+                }
+                if (searchBar.equals(overdueSearchBar)) {
+                    displayOverdueTableOnSearch(keywords);
+                }
+            });
         }
     }
 
@@ -94,7 +182,7 @@ public class StudentJFrame extends javax.swing.JFrame {
         }
     }
 
-    public void viewOverdueTable() {
+    public void viewMyOverdueTable() {
         model = (DefaultTableModel) overdueTable.getModel();
         model.setRowCount(0);
         ArrayList<Overdue> overdues = database.getUserOverdues(loggedId);
@@ -103,10 +191,26 @@ public class StudentJFrame extends javax.swing.JFrame {
         }
         Object[] object = new Object[3];
         for (Overdue overdue : overdues) {
-            System.out.println("Hello");
             object[0] = overdue.getOverdueId();
             object[1] = overdue.getBookTitle();
             object[2] = overdue.getFine();
+            model.addRow(object);
+        }
+    }
+
+    public void viewMyBorrowTable() {
+        model = (DefaultTableModel) borrowTable.getModel();
+        model.setRowCount(0);
+        ArrayList<Borrow> borrows = database.getUserBorrows(loggedId);
+        if (borrows == null) {
+            return;
+        }
+        Object[] object = new Object[4];
+        for (Borrow borrow : borrows) {
+            object[0] = borrow.getId();
+            object[1] = borrow.getBookTitle();
+            object[2] = borrow.getStartDate();
+            object[3] = borrow.getEndDate();
             model.addRow(object);
         }
     }
@@ -132,7 +236,7 @@ public class StudentJFrame extends javax.swing.JFrame {
         }
     }
 
-        @SuppressWarnings("unchecked")
+    @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
@@ -150,7 +254,6 @@ public class StudentJFrame extends javax.swing.JFrame {
         overdueScrollPane = new javax.swing.JScrollPane();
         overdueTable = new com.lbms.app.swing.Table();
         card3 = new com.lbms.app.swing.ContentPanel();
-        profileCancelButton = new javax.swing.JButton();
         profileConfirmButton = new javax.swing.JButton();
         passwordEditLabel = new javax.swing.JLabel();
         passwordEditField = new javax.swing.JPasswordField();
@@ -164,6 +267,10 @@ public class StudentJFrame extends javax.swing.JFrame {
         addressEditField = new javax.swing.JTextField();
         contactEditLabel = new javax.swing.JLabel();
         contactEditField = new javax.swing.JTextField();
+        borrowedLabel = new javax.swing.JLabel();
+        borrowScrollPane = new javax.swing.JScrollPane();
+        borrowTable = new com.lbms.app.swing.Table();
+        updateLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -193,9 +300,16 @@ public class StudentJFrame extends javax.swing.JFrame {
 
         borrowButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         borrowButton.setText("BORROW");
+        borrowButton.setEnabled(false);
+        borrowButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                borrowButtonActionPerformed(evt);
+            }
+        });
 
         reserveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         reserveButton.setText("RESERVE");
+        reserveButton.setEnabled(false);
         reserveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 reserveButtonActionPerformed(evt);
@@ -224,11 +338,11 @@ public class StudentJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addComponent(bookSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
-                .addComponent(bookScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 612, Short.MAX_VALUE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 24, Short.MAX_VALUE)
+                .addComponent(bookScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
+                .addGap(25, 25, 25)
                 .addGroup(card1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(borrowButton, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE)
-                    .addComponent(reserveButton, javax.swing.GroupLayout.DEFAULT_SIZE, 39, Short.MAX_VALUE))
+                    .addComponent(borrowButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(reserveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
@@ -277,9 +391,6 @@ public class StudentJFrame extends javax.swing.JFrame {
 
         contentPanel.add(card2, "card2");
 
-        profileCancelButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        profileCancelButton.setText("CANCEL");
-
         profileConfirmButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         profileConfirmButton.setText("UPDATE");
         profileConfirmButton.addActionListener(new java.awt.event.ActionListener() {
@@ -291,20 +402,60 @@ public class StudentJFrame extends javax.swing.JFrame {
         passwordEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         passwordEditLabel.setText("Password");
 
+        passwordEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         firstNameEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         firstNameEditLabel.setText("First Name");
+
+        firstNameEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         lastNameEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         lastNameEditLabel.setText("Last Name");
 
+        lastNameEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         emailEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         emailEditLabel.setText("Email Address");
+
+        emailEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         addressEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addressEditLabel.setText("Address");
 
+        addressEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         contactEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         contactEditLabel.setText("Contact Number");
+
+        contactEditField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
+        borrowedLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 18)); // NOI18N
+        borrowedLabel.setHorizontalAlignment(javax.swing.SwingConstants.LEFT);
+        borrowedLabel.setText("Borrowed Books");
+
+        borrowTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Book ID", "Title", "Start Date", "End Date"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        borrowTable.setRowSelectionAllowed(false);
+        borrowTable.getTableHeader().setResizingAllowed(false);
+        borrowTable.getTableHeader().setReorderingAllowed(false);
+        borrowScrollPane.setViewportView(borrowTable);
+
+        updateLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 18)); // NOI18N
+        updateLabel.setText("Update Profile");
 
         javax.swing.GroupLayout card3Layout = new javax.swing.GroupLayout(card3);
         card3.setLayout(card3Layout);
@@ -312,54 +463,63 @@ public class StudentJFrame extends javax.swing.JFrame {
             card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card3Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
+                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(contactEditField)
+                    .addComponent(contactEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(addressEditField)
+                    .addComponent(addressEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(emailEditField)
+                    .addComponent(emailEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(lastNameEditField)
+                    .addComponent(lastNameEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(firstNameEditField)
+                    .addComponent(firstNameEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(passwordEditField)
+                    .addComponent(passwordEditLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(profileConfirmButton, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(updateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(25, 25, 25)
                 .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(addressEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(emailEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(emailEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lastNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(lastNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(firstNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(firstNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(passwordEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(profileCancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(675, Short.MAX_VALUE))
+                    .addComponent(borrowedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE))
+                .addGap(25, 25, 25))
         );
         card3Layout.setVerticalGroup(
             card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card3Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(passwordEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(firstNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(firstNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(lastNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(lastNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(emailEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(emailEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(addressEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 252, Short.MAX_VALUE)
-                .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(10, 10, 10)
-                .addComponent(profileCancelButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(updateLabel, javax.swing.GroupLayout.DEFAULT_SIZE, 25, Short.MAX_VALUE)
+                    .addComponent(borrowedLabel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGap(25, 25, 25)
+                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(card3Layout.createSequentialGroup()
+                        .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(passwordEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(firstNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(firstNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(lastNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(lastNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(emailEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(emailEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(addressEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(10, 10, 10)
+                        .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(borrowScrollPane, javax.swing.GroupLayout.PREFERRED_SIZE, 410, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE)
+                .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
@@ -380,9 +540,7 @@ public class StudentJFrame extends javax.swing.JFrame {
                 .addGap(0, 0, 0)
                 .addGroup(mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                    .addGroup(mainPanelLayout.createSequentialGroup()
-                        .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-                        .addGap(5, 5, 5))))
+                    .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -401,7 +559,18 @@ public class StudentJFrame extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void reserveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reserveButtonActionPerformed
-        // TODO add your handling code here:
+        int selectedIndex = bookTable.getSelectedRow();
+        int bookId = Integer.parseInt(bookTable.getValueAt(selectedIndex, 0).toString());
+        String title = bookTable.getValueAt(selectedIndex, 1).toString();
+        String author = bookTable.getValueAt(selectedIndex, 2).toString();
+        
+        if (database.hasUserMadeRequest(loggedId, "request", bookId) || database.hasUserMadeRequest(loggedId, "reserve", bookId)) {
+            JOptionPane.showMessageDialog(null, "You already have a pending request!");
+            return;
+        }
+
+        ReserveJFrame reserveJFrame = new ReserveJFrame(bookId, loggedId, title, author);
+        reserveJFrame.setVisible(true);
     }//GEN-LAST:event_reserveButtonActionPerformed
 
     private void profileConfirmButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_profileConfirmButtonActionPerformed
@@ -413,6 +582,8 @@ public class StudentJFrame extends javax.swing.JFrame {
         textFieldMap.put("address", addressEditField);
         textFieldMap.put("contactNumber", contactEditField);
 
+        boolean flag = false;
+
         User user = database.getCurrentUser(loggedId);
 
         for (Map.Entry<String, JTextField> entry : textFieldMap.entrySet()) {
@@ -420,14 +591,31 @@ public class StudentJFrame extends javax.swing.JFrame {
             JTextField textField = entry.getValue();
 
             if (!textField.getText().isEmpty()) {
+                flag = true;
                 updateAttribute(user, attributeName, textField.getText());
             }
+        }
+
+        if (!flag) {
+            JOptionPane.showMessageDialog(null, "Fill at least one field to update!");
+            return;
         }
 
         database.updateUser(user);
         JOptionPane.showMessageDialog(null, "Your profile has been updated!");
         emptyFields(passwordEditField, firstNameEditField, lastNameEditField, emailEditField, addressEditField, contactEditField);
     }//GEN-LAST:event_profileConfirmButtonActionPerformed
+
+    private void borrowButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_borrowButtonActionPerformed
+        int selectedIndex = bookTable.getSelectedRow();
+        int bookId = Integer.parseInt(bookTable.getValueAt(selectedIndex, 0).toString());
+        String title = bookTable.getValueAt(selectedIndex, 1).toString();
+        String author = bookTable.getValueAt(selectedIndex, 2).toString();
+
+        BorrowJFrame borrowJFrame = new BorrowJFrame(bookId, loggedId, title, author);
+        borrowJFrame.setStudentJFrame(this);
+        borrowJFrame.setVisible(true);
+    }//GEN-LAST:event_borrowButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -443,16 +631,24 @@ public class StudentJFrame extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
                 }
             }
         } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(StudentJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(StudentJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(StudentJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(StudentJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(StudentJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(StudentJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
+
         } catch (javax.swing.UnsupportedLookAndFeelException ex) {
-            java.util.logging.Logger.getLogger(StudentJFrame.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(StudentJFrame.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 
@@ -471,6 +667,9 @@ public class StudentJFrame extends javax.swing.JFrame {
     private com.lbms.app.swing.SearchBar bookSearchBar;
     private com.lbms.app.swing.Table bookTable;
     private javax.swing.JButton borrowButton;
+    private javax.swing.JScrollPane borrowScrollPane;
+    private com.lbms.app.swing.Table borrowTable;
+    private javax.swing.JLabel borrowedLabel;
     private com.lbms.app.swing.ContentPanel card1;
     private com.lbms.app.swing.ContentPanel card2;
     private com.lbms.app.swing.ContentPanel card3;
@@ -490,8 +689,8 @@ public class StudentJFrame extends javax.swing.JFrame {
     private com.lbms.app.swing.Table overdueTable;
     private javax.swing.JPasswordField passwordEditField;
     private javax.swing.JLabel passwordEditLabel;
-    private javax.swing.JButton profileCancelButton;
     private javax.swing.JButton profileConfirmButton;
     private javax.swing.JButton reserveButton;
+    private javax.swing.JLabel updateLabel;
     // End of variables declaration//GEN-END:variables
 }

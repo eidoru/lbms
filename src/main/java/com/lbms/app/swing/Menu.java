@@ -11,6 +11,7 @@ public final class Menu extends javax.swing.JPanel {
 
     private OnMenuItemSelectEvent menuEvent;
     private OnLogoutEvent logoutEvent;
+    
     private int userType;
 
     public Menu() {
@@ -46,16 +47,16 @@ public final class Menu extends javax.swing.JPanel {
     public void initMenuItemsForLibrarian() {
         menuList.addItem(new MenuModel("account", "Users", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("borrow", "Borrowers", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("request", "Requests", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("borrow", "Borrowers", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("edit_account", "Edit Profile", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("edit_account", "Profile", MenuModel.MenuType.MENU));
     }
 
     public void initMenuItemsForStudent() {
         menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("edit_account", "Edit Profile", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("edit_account", "Profile", MenuModel.MenuType.MENU));
     }
 
     @SuppressWarnings("unchecked")
@@ -117,8 +118,8 @@ public final class Menu extends javax.swing.JPanel {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addComponent(container, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(50, 50, 50)
-                .addComponent(menuList, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
+                .addGap(48, 48, 48)
+                .addComponent(menuList, javax.swing.GroupLayout.DEFAULT_SIZE, 626, Short.MAX_VALUE)
                 .addGap(10, 10, 10)
                 .addComponent(logout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())

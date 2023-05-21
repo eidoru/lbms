@@ -57,6 +57,9 @@
   <SubComponents>
     <Component class="javax.swing.JButton" name="loginButton">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="SF Pro Text Light" size="12" style="0"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Login"/>
       </Properties>
       <Events>
@@ -67,6 +70,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="passwordLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="SF Pro Text Light" size="12" style="0"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="Password"/>
       </Properties>
     </Component>
@@ -74,6 +80,9 @@
     </Component>
     <Component class="javax.swing.JLabel" name="userIdLabel">
       <Properties>
+        <Property name="font" type="java.awt.Font" editor="org.netbeans.beaninfo.editors.FontEditor">
+          <Font name="SF Pro Text Light" size="12" style="0"/>
+        </Property>
         <Property name="text" type="java.lang.String" value="User ID"/>
       </Properties>
     </Component>

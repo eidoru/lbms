@@ -27,6 +27,7 @@ public class LoginJFrame extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
+        loginButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         loginButton.setText("Login");
         loginButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -34,8 +35,10 @@ public class LoginJFrame extends javax.swing.JFrame {
             }
         });
 
+        passwordLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         passwordLabel.setText("Password");
 
+        userIdLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         userIdLabel.setText("User ID");
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());

@@ -1,7 +1,6 @@
 package com.lbms.app.frame;
 
 import com.lbms.app.database.Database;
-import com.lbms.app.event.OnSearchEvent;
 import com.lbms.app.object.Book;
 import com.lbms.app.object.Borrow;
 import com.lbms.app.object.Overdue;
@@ -10,6 +9,7 @@ import com.lbms.app.object.User;
 import com.lbms.app.swing.SearchBar;
 import com.lbms.app.swing.Table;
 import java.awt.CardLayout;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -31,6 +31,8 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         loggedId = userId;
         database = new Database();
 
+        setTitle(database.getCurrentUser(userId).getFirstName());
+
         // init methods
         initComponents();
         viewUserTable();
@@ -43,7 +45,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         userIdField.setText(String.valueOf(database.getTableId("user", "user_id")));
         bookIdField.setText(String.valueOf(database.getTableId("book", "book_id")));
         rowSelectionListener(userTable, bookTable, borrowTable, requestTable); // listens when row is selected
-        onSearchListener(userSearchBar, bookSearchBar, borrowSearchBar, requestSearchBar);
+        onSearchListener(userSearchBar, bookSearchBar, borrowSearchBar, requestSearchBar, overdueSearchBar);
 
         // checks for filled fields to enable add button
         textFieldsListener(addUserButton, passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
@@ -51,50 +53,148 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         System.out.println(loggedId);
     }
 
+    public void displayUserTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) userTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<User> users = database.displayUserSearch(keywords);
+        Object[] data = new Object[9];
+        for (User user : users) {
+            data[0] = user.getUserId();
+            data[1] = user.getFirstName();
+            data[2] = user.getLastName();
+            data[3] = user.getEmail();
+            data[4] = user.getAddress();
+            data[5] = user.getContactNumber();
+            data[6] = user.getCourse();
+            data[7] = user.getYearLevel();
+            switch (user.getUserType()) {
+                case 0 ->
+                    data[8] = "Student";
+                case 1 ->
+                    data[8] = "Librarian";
+            }
+            model.addRow(data);
+        }
+    }
+
+    public void displayBookTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) bookTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Book> books = database.displayBookSearch(keywords);
+        Object[] data = new Object[5];
+        for (Book book : books) {
+            data[0] = book.getBookId();
+            data[1] = book.getTitle();
+            data[2] = book.getAuthor();
+            data[3] = book.getIsbn();
+            data[4] = book.getStatus();
+            model.addRow(data);
+        }
+    }
+
+    public void displayRequestTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) requestTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Request> requests = database.displayRequestSearch(keywords);
+        Object[] data = new Object[5];
+        for (Request request : requests) {
+            data[0] = request.getId();
+            data[1] = request.getBookTitle();
+            data[2] = request.getUserFirstName();
+            data[3] = request.getUserLastName();
+            data[4] = request.getDuration();
+            model.addRow(data);
+        }
+    }
+
+    public void displayBorrowTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) borrowTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Borrow> borrowers = database.displayBorrowSearch(keywords);
+        Object[] data = new Object[7];
+        for (Borrow borrow : borrowers) {
+            data[0] = borrow.getId();
+            data[1] = borrow.getBookTitle();
+            data[2] = borrow.getUserFirstName();
+            data[3] = borrow.getUserLastName();
+            data[4] = borrow.getDuration();
+            data[5] = borrow.getStartDate();
+            data[6] = borrow.getEndDate();
+            model.addRow(data);
+        }
+    }
+
+    public void displayOverdueTableOnSearch(String[] keywords) {
+        // clear table
+        DefaultTableModel model = (DefaultTableModel) overdueTable.getModel();
+        model.setRowCount(0);
+        // fill table
+        ArrayList<Overdue> overdues = database.displayOverdueSearch(keywords);
+        Object[] data = new Object[5];
+        for (Overdue overdue : overdues) {
+            data[0] = overdue.getOverdueId();
+            data[1] = overdue.getBookTitle();
+            data[2] = overdue.getUserFirstName();
+            data[3] = overdue.getUserLastName();
+            data[4] = overdue.getFine();
+            model.addRow(data);
+        }
+    }
+
     public void onSearchListener(SearchBar... searchBars) {
         for (SearchBar searchBar : searchBars) {
             searchBar.setSearchEvent(() -> {
+                String input = searchBar.getText().toLowerCase();
+                if (input.length() == 0) {
+                    return;
+                }
+                String[] keywords = input.split(" ");
                 if (searchBar.equals(userSearchBar)) {
-                    System.out.println("Card 1");
+                    displayUserTableOnSearch(keywords);
                 }
                 if (searchBar.equals(bookSearchBar)) {
-                    System.out.println("Card 2");
-                }
-                if (searchBar.equals(borrowSearchBar)) {
-                    System.out.println("Card 3");
+                    displayBookTableOnSearch(keywords);
                 }
                 if (searchBar.equals(requestSearchBar)) {
-                    System.out.println("Card 4");
+                    displayRequestTableOnSearch(keywords);
+                }
+                if (searchBar.equals(borrowSearchBar)) {
+                    displayBorrowTableOnSearch(keywords);
+                }
+                if (searchBar.equals(overdueSearchBar)) {
+                    displayOverdueTableOnSearch(keywords);
                 }
             });
         }
     }
 
     public void rowSelectionListener(Table... tables) {
+        Map<JButton, Table> buttonTableMapping = new HashMap<>();
+        buttonTableMapping.put(userRemoveButton, userTable);
+        buttonTableMapping.put(bookRemoveButton, bookTable);
+        buttonTableMapping.put(borrowReturnButton, borrowTable);
+        buttonTableMapping.put(requestApproveButton, requestTable);
+        buttonTableMapping.put(requestRejectButton, requestTable);
+
         for (Table table : tables) {
             table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
                 int selectedRow = table.getSelectedRow();
-                if (table.equals(userTable) && selectedRow >= 0) {
-                    userRemoveButton.setEnabled(true);
-                } else {
-                    userRemoveButton.setEnabled(false);
-                }
-                if (table.equals(bookTable) && selectedRow >= 0) {
-                    bookRemoveButton.setEnabled(true);
-                } else {
-                    bookRemoveButton.setEnabled(false);
-                }
-                if (table.equals(borrowTable) && selectedRow >= 0) {
-                    borrowReturnButton.setEnabled(true);
-                } else {
-                    borrowReturnButton.setEnabled(false);
-                }
-                if (table.equals(requestTable) && selectedRow >= 0) {
-                    requestApproveButton.setEnabled(true);
-                    requestRejectButton.setEnabled(true);
-                } else {
-                    requestApproveButton.setEnabled(false);
-                    requestRejectButton.setEnabled(false);
+                for (Map.Entry<JButton, Table> entry : buttonTableMapping.entrySet()) {
+                    JButton currentButton = entry.getKey();
+                    Table currentTable = entry.getValue();
+                    if (table.equals(currentTable) && selectedRow >= 0) {
+                        currentButton.setEnabled(true);
+                    } else {
+                        currentButton.setEnabled(false);
+                    }
                 }
             });
         }
@@ -166,12 +266,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                     viewBookTable();
                 }
                 case 2 -> {
-                    cardLayout.show(contentPanel, "card3");  // borrowers
-                    viewBorrowTable();
+                    cardLayout.show(contentPanel, "card3");  // requests
+                    viewRequestTable();
                 }
                 case 3 -> {
-                    cardLayout.show(contentPanel, "card4");  // requests
-                    viewRequestTable();
+                    cardLayout.show(contentPanel, "card4");  // borrowers
+                    viewBorrowTable();
                 }
                 case 4 -> {
                     cardLayout.show(contentPanel, "card5");   // overdues
@@ -241,7 +341,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         if (requests == null) {
             return;
         }
-        Object[] object = new Object[requests.size()];
+        Object[] object = new Object[5];
         for (Request request : requests) {
             object[0] = request.getId();
             object[1] = request.getBookTitle();
@@ -252,6 +352,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         }
     }
 
+
     public void viewBorrowTable() {
         model = (DefaultTableModel) borrowTable.getModel();
         model.setRowCount(0);
@@ -259,7 +360,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         if (borrowers == null) {
             return;
         }
-        Object[] object = new Object[borrowers.size()];
+        Object[] object = new Object[7];
         for (Borrow borrow : borrowers) {
             object[0] = borrow.getId();
             object[1] = borrow.getBookTitle();
@@ -281,7 +382,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         }
         Object[] object = new Object[5];
         for (Overdue overdue : overdues) {
-            System.out.println("Hello");
             object[0] = overdue.getOverdueId();
             object[1] = overdue.getBookTitle();
             object[2] = overdue.getUserFirstName();
@@ -290,27 +390,29 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             model.addRow(object);
         }
     }
-    
+
     private void updateAttribute(User user, String attributeName, String attributeValue) {
-    switch (attributeName) {
-        case "password":
-            user.setPassword(attributeValue);
-            break;
-        case "firstName":
-            user.setFirstName(attributeValue);
-            break;
-        case "lastName":
-            user.setLastName(attributeValue);
-            break;
-        case "email":
-            user.setEmail(attributeValue);
-            break;
-        case "address":
-            user.setAddress(attributeValue);
-        case "contactNumber":
-            user.setContactNumber(attributeValue);
+        switch (attributeName) {
+            case "password":
+                user.setPassword(attributeValue);
+                break;
+            case "firstName":
+                user.setFirstName(attributeValue);
+                break;
+            case "lastName":
+                user.setLastName(attributeValue);
+                break;
+            case "email":
+                user.setEmail(attributeValue);
+                break;
+            case "address":
+                user.setAddress(attributeValue);
+                break;
+            case "contactNumber":
+                user.setContactNumber(attributeValue);
+                break;
+        }
     }
-}
 
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
@@ -333,16 +435,16 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         bookScrollPane = new javax.swing.JScrollPane();
         bookTable = new com.lbms.app.swing.Table();
         card3 = new com.lbms.app.swing.ContentPanel();
-        borrowSearchBar = new com.lbms.app.swing.SearchBar();
-        borrowReturnButton = new javax.swing.JButton();
-        borrowScrollPane = new javax.swing.JScrollPane();
-        borrowTable = new com.lbms.app.swing.Table();
-        card4 = new com.lbms.app.swing.ContentPanel();
         requestSearchBar = new com.lbms.app.swing.SearchBar();
         requestApproveButton = new javax.swing.JButton();
         requestRejectButton = new javax.swing.JButton();
         requestScrollPane = new javax.swing.JScrollPane();
         requestTable = new com.lbms.app.swing.Table();
+        card4 = new com.lbms.app.swing.ContentPanel();
+        borrowSearchBar = new com.lbms.app.swing.SearchBar();
+        borrowReturnButton = new javax.swing.JButton();
+        borrowScrollPane = new javax.swing.JScrollPane();
+        borrowTable = new com.lbms.app.swing.Table();
         card5 = new com.lbms.app.swing.ContentPanel();
         overdueSearchBar = new com.lbms.app.swing.SearchBar();
         overdueScrollPane = new javax.swing.JScrollPane();
@@ -362,6 +464,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         addressEditField = new javax.swing.JTextField();
         contactEditLabel = new javax.swing.JLabel();
         contactEditField = new javax.swing.JTextField();
+        updateLabel = new javax.swing.JLabel();
         userAddPanel = new com.lbms.app.swing.ContentPanel();
         userIdLabel = new javax.swing.JLabel();
         userIdField = new javax.swing.JTextField();
@@ -547,6 +650,76 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
 
         contentPanel.add(card2, "card2");
 
+        requestSearchBar.setBackground(new java.awt.Color(70, 73, 75));
+
+        requestApproveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        requestApproveButton.setText("APPROVE REQUEST");
+        requestApproveButton.setEnabled(false);
+        requestApproveButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                requestApproveButtonActionPerformed(evt);
+            }
+        });
+
+        requestRejectButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        requestRejectButton.setText("REJECT REQUEST");
+        requestRejectButton.setEnabled(false);
+        requestRejectButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                requestRejectButtonActionPerformed(evt);
+            }
+        });
+
+        requestTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Request ID", "Book Title", "First Name", "Last Name", "Duration"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        requestScrollPane.setViewportView(requestTable);
+
+        javax.swing.GroupLayout card3Layout = new javax.swing.GroupLayout(card3);
+        card3.setLayout(card3Layout);
+        card3Layout.setHorizontalGroup(
+            card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card3Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(card3Layout.createSequentialGroup()
+                        .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(25, 25, 25)
+                        .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                        .addComponent(requestScrollPane)
+                        .addComponent(requestSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addGap(25, 25, 25))
+        );
+        card3Layout.setVerticalGroup(
+            card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card3Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(requestSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25)
+                .addComponent(requestScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
+                .addGap(25, 25, 25)
+                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGap(25, 25, 25))
+        );
+
+        contentPanel.add(card3, "card3");
+
         borrowSearchBar.setBackground(new java.awt.Color(70, 73, 75));
 
         borrowReturnButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
@@ -576,64 +749,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         });
         borrowScrollPane.setViewportView(borrowTable);
 
-        javax.swing.GroupLayout card3Layout = new javax.swing.GroupLayout(card3);
-        card3.setLayout(card3Layout);
-        card3Layout.setHorizontalGroup(
-            card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card3Layout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(card3Layout.createSequentialGroup()
-                        .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                    .addGroup(card3Layout.createSequentialGroup()
-                        .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(borrowScrollPane)
-                            .addComponent(borrowSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                        .addGap(25, 25, 25))))
-        );
-        card3Layout.setVerticalGroup(
-            card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card3Layout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(borrowSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25)
-                .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
-                .addGap(25, 25, 25)
-                .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(25, 25, 25))
-        );
-
-        contentPanel.add(card3, "card3");
-
-        requestSearchBar.setBackground(new java.awt.Color(70, 73, 75));
-
-        requestApproveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        requestApproveButton.setText("APPROVE REQUEST");
-        requestApproveButton.setEnabled(false);
-
-        requestRejectButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        requestRejectButton.setText("REJECT REQUEST");
-        requestRejectButton.setEnabled(false);
-
-        requestTable.setModel(new javax.swing.table.DefaultTableModel(
-            new Object [][] {
-
-            },
-            new String [] {
-                "Request ID", "Book Title", "First Name", "Last Name", "Duration"
-            }
-        ) {
-            boolean[] canEdit = new boolean [] {
-                false, false, false, false, false
-            };
-
-            public boolean isCellEditable(int rowIndex, int columnIndex) {
-                return canEdit [columnIndex];
-            }
-        });
-        requestScrollPane.setViewportView(requestTable);
-
         javax.swing.GroupLayout card4Layout = new javax.swing.GroupLayout(card4);
         card4.setLayout(card4Layout);
         card4Layout.setHorizontalGroup(
@@ -642,25 +757,23 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(card4Layout.createSequentialGroup()
-                        .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(25, 25, 25)
-                        .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                        .addComponent(requestScrollPane)
-                        .addComponent(requestSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
-                .addGap(25, 25, 25))
+                        .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(card4Layout.createSequentialGroup()
+                        .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(borrowScrollPane)
+                            .addComponent(borrowSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addGap(25, 25, 25))))
         );
         card4Layout.setVerticalGroup(
             card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card4Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(requestSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(borrowSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
-                .addComponent(requestScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
+                .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
-                .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
@@ -743,6 +856,9 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         contactEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         contactEditLabel.setText("Contact Number");
 
+        updateLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 18)); // NOI18N
+        updateLabel.setText("Update Profile");
+
         javax.swing.GroupLayout card6Layout = new javax.swing.GroupLayout(card6);
         card6.setLayout(card6Layout);
         card6Layout.setHorizontalGroup(
@@ -750,6 +866,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             .addGroup(card6Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addGroup(card6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(updateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -768,6 +885,8 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         card6Layout.setVerticalGroup(
             card6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card6Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(updateLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
                 .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
@@ -792,8 +911,8 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
                 .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 301, Short.MAX_VALUE)
-                .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 250, Short.MAX_VALUE)
+                .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
@@ -802,25 +921,38 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         userIdLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         userIdLabel.setText("User ID (System Generated)");
 
+        userIdField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         userIdField.setEnabled(false);
 
         passwordLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         passwordLabel.setText("Password");
 
+        passwordField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         firstNameLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         firstNameLabel.setText("First Name");
+
+        firstNameField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         lastNameLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         lastNameLabel.setText("Last Name");
 
+        lastNameField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         emailLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         emailLabel.setText("Email Address");
+
+        emailField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         addressLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addressLabel.setText("Address");
 
+        addressField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         contactLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         contactLabel.setText("Contact Number");
+
+        contactField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         courseLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         courseLabel.setText("Course");
@@ -958,16 +1090,23 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         bookIdLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         bookIdLabel.setText("Book ID (System Generated)");
 
+        bookIdField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         bookIdField.setEnabled(false);
 
         titleLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         titleLabel.setText("Title");
 
+        titleField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         authorLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         authorLabel.setText("Author");
 
+        authorField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+
         isbnLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         isbnLabel.setText("ISBN");
+
+        isbnField.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
 
         addBookButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addBookButton.setText("ADD");
@@ -1040,12 +1179,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
                 .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-            .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
+            .addComponent(menu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -1143,7 +1282,10 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
     }//GEN-LAST:event_userAddButtonActionPerformed
 
     private void borrowReturnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_borrowReturnButtonActionPerformed
-        // TODO add your handling code here:
+        int selectedIndex = borrowTable.getSelectedRow();
+        int borrowId = Integer.parseInt(borrowTable.getValueAt(selectedIndex, 0).toString());
+        database.returnBook(borrowId);
+        viewBorrowTable();
     }//GEN-LAST:event_borrowReturnButtonActionPerformed
 
     private void addBookButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addBookButtonActionPerformed
@@ -1169,7 +1311,9 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         textFieldMap.put("email", emailEditField);
         textFieldMap.put("address", addressEditField);
         textFieldMap.put("contactNumber", contactEditField);
-        
+
+        boolean flag = false;
+
         User user = database.getCurrentUser(loggedId);
 
         for (Map.Entry<String, JTextField> entry : textFieldMap.entrySet()) {
@@ -1177,14 +1321,62 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             JTextField textField = entry.getValue();
 
             if (!textField.getText().isEmpty()) {
+                flag = true;
                 updateAttribute(user, attributeName, textField.getText());
             }
         }
-        
+
+        if (!flag) {
+            JOptionPane.showMessageDialog(null, "Fill at least one field to update!");
+            return;
+        }
+
         database.updateUser(user);
         JOptionPane.showMessageDialog(null, "Your profile has been updated!");
         emptyFields(passwordEditField, firstNameEditField, lastNameEditField, emailEditField, addressEditField, contactEditField);
     }//GEN-LAST:event_profileConfirmButtonActionPerformed
+
+    private void requestApproveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_requestApproveButtonActionPerformed
+        int selectedIndex = requestTable.getSelectedRow();
+        int requestId = Integer.parseInt(requestTable.getValueAt(selectedIndex, 0).toString());
+        int duration = Integer.parseInt(requestTable.getValueAt(selectedIndex, 4).toString());
+
+        Request request = database.getRequest(requestId);
+        Borrow borrowRequest = new Borrow();
+        borrowRequest.setId(requestId);
+        borrowRequest.setBookId(request.getBookId());
+        borrowRequest.setUserId(request.getUserId());
+        borrowRequest.setDuration(duration);
+
+        LocalDate now = LocalDate.now();
+        LocalDate sum = now.plusDays(duration);
+
+        String startDate = now.toString();
+        String endDate = sum.toString();
+
+        borrowRequest.setStartDate(startDate);
+        borrowRequest.setEndDate(endDate);
+
+        database.insertRequest(borrowRequest, "borrow");
+        database.updateBookStatus(request.getBookId());
+        if (database.deleteRequest("request", requestId)) {
+            database.resetAutoIncrement("request");
+        }
+        viewRequestTable();
+    }//GEN-LAST:event_requestApproveButtonActionPerformed
+
+    private void requestRejectButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_requestRejectButtonActionPerformed
+        int selectedIndex = requestTable.getSelectedRow();
+        int requestId = Integer.parseInt(requestTable.getValueAt(selectedIndex, 0).toString());
+
+        Request request = database.getRequest(requestId);
+
+        if (database.deleteRequest("request", requestId)) {
+            database.resetAutoIncrement("request");
+        }
+        database.checkForReserveAfterReject(request.getBookId());
+        viewRequestTable();
+    }//GEN-LAST:event_requestRejectButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1292,6 +1484,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
     private javax.swing.JRadioButton studentRadioButton;
     private javax.swing.JTextField titleField;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JLabel updateLabel;
     private javax.swing.JButton userAddButton;
     private com.lbms.app.swing.ContentPanel userAddPanel;
     private javax.swing.JTextField userIdField;
