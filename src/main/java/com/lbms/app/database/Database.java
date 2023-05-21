@@ -1,9 +1,10 @@
 package com.lbms.app.database;
 
-import com.lbms.app.object.Request;
 import com.lbms.app.object.Book;
 import com.lbms.app.object.Borrow;
+import com.lbms.app.object.Overdue;
 import com.lbms.app.object.Reserve;
+import com.lbms.app.object.Request;
 import com.lbms.app.object.User;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -14,6 +15,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JTextField;
 
 public class Database implements DatabaseMethods {
 
@@ -201,6 +203,74 @@ public class Database implements DatabaseMethods {
         return null;
     }
 
+    public ArrayList<Overdue> getOverdues() {
+        ArrayList<Overdue> overdues = new ArrayList<>();
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = connect.createStatement();
+            resultSet = statement.executeQuery("SELECT overdue.overdue_id, book.title, user.first_name, user.last_name, overdue.fine FROM overdue INNER JOIN book ON overdue.book_id=book.book_id INNER JOIN user ON overdue.user_id=user.user_id");
+            while (resultSet.next()) {
+                Overdue overdue = new Overdue();
+                overdue.setOverdueId(resultSet.getInt(1));
+                overdue.setBookTitle(resultSet.getString(2));
+                overdue.setUserFirstName(resultSet.getString(3));
+                overdue.setUserLastName(resultSet.getString(4));
+                overdue.setFine(resultSet.getDouble(5));
+                overdues.add(overdue);
+            }
+            return overdues;
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return null;
+    }
+
+    public ArrayList<Overdue> getUserOverdues(int userId) {
+        ArrayList<Overdue> overdues = new ArrayList<>();
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = connect.createStatement();
+            resultSet = statement.executeQuery("SELECT overdue.overdue_id, book.title, user.first_name, user.last_name, overdue.fine FROM overdue INNER JOIN book ON overdue.book_id=book.book_id INNER JOIN user ON overdue.user_id=user.user_id WHERE overdue.user_id='" + userId + "'");
+            while (resultSet.next()) {
+                Overdue overdue = new Overdue();
+                overdue.setOverdueId(resultSet.getInt(1));
+                overdue.setBookTitle(resultSet.getString(2));
+                overdue.setUserFirstName(resultSet.getString(3));
+                overdue.setUserLastName(resultSet.getString(4));
+                overdue.setFine(resultSet.getDouble(5));
+                overdues.add(overdue);
+            }
+            return overdues;
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return null;
+    }
+
     public int getTableId(String table, String id) {
         Statement statement = null;
         ResultSet resultSet = null;
@@ -227,6 +297,46 @@ public class Database implements DatabaseMethods {
             }
         }
         return 0;
+    }
+
+    public User getCurrentUser(int userId) {
+        Statement statement = null;
+        ResultSet resultSet = null;
+        try {
+            statement = connect.createStatement();
+            resultSet = statement.executeQuery("SELECT * FROM user WHERE user_id = '" + userId + "'");
+            if (resultSet.next()) {
+                User user = new User();
+                user.setUserId(userId);
+                user.setPassword(resultSet.getString(2));
+                user.setFirstName(resultSet.getString(3));
+                user.setLastName(resultSet.getString(4));
+                user.setEmail(resultSet.getString(5));
+                user.setAddress(resultSet.getString(6));
+                user.setContactNumber(resultSet.getString(7));
+                user.setCourse(resultSet.getString(8));
+                user.setYearLevel(resultSet.getInt(9));
+                user.setUserType(resultSet.getInt(10));
+                return user;
+            } else {
+                return null;
+            }
+
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+                if (resultSet != null) {
+                    resultSet.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return null;
     }
 
     public void resetAutoIncrement(String table) {
@@ -304,6 +414,31 @@ public class Database implements DatabaseMethods {
         return false;
     }
 
+    public boolean insertOverdue(Overdue overdue) {
+        PreparedStatement statement = null;
+        String SQL;
+        try {
+            resetAutoIncrement("overdue");
+            SQL = "INSERT INTO overdue (book_id, user_id, fine) VALUES(?, ?, ?)";
+            statement = connect.prepareStatement(SQL);
+            statement.setInt(1, overdue.getBookId());
+            statement.setInt(2, overdue.getUserId());
+            statement.setDouble(3, overdue.getFine());
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return false;
+    }
+
     public boolean insertRequest(Request request, String table) {
         PreparedStatement statement = null;
         String SQL;
@@ -330,16 +465,113 @@ public class Database implements DatabaseMethods {
                 }
                 case "reserve" -> {
                     resetAutoIncrement("reserve");
-                    SQL += "reserve (book_id, user_id, duration, start_date, end_date) VALUES(?, ?, ?, ?, ?)";
+                    SQL += "reserve (book_id, user_id, duration) VALUES(?, ?, ?)";
                     statement = connect.prepareStatement(SQL);
                     statement.setInt(1, ((Reserve) request).getBookId());
                     statement.setInt(2, ((Reserve) request).getUserId());
                     statement.setInt(3, ((Reserve) request).getDuration());
-                    statement.setString(4, ((Reserve) request).getStartDate());
-                    statement.setString(5, ((Reserve) request).getEndDate());
                 }
             }
             statement.executeUpdate(SQL);
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (statement != null) {
+                    statement.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteUser(int id) {
+        PreparedStatement select = null;
+        PreparedStatement delete = null;
+        String SQL;
+        try {
+            SQL = "SELECT user_id FROM user WHERE user_id = ?";
+            select = connect.prepareStatement(SQL);
+            select.setInt(1, id);
+            ResultSet resultSet = select.executeQuery();
+            if (resultSet.next()) {
+                SQL = "DELETE FROM user WHERE user_id = ?";
+                delete = connect.prepareStatement(SQL);
+                delete.setInt(1, id);
+                delete.executeUpdate();
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (select != null) {
+                    select.close();
+                }
+                if (delete != null) {
+                    delete.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteBook(int id) {
+        PreparedStatement select = null;
+        PreparedStatement delete = null;
+        String SQL;
+        try {
+            SQL = "SELECT book_id FROM book WHERE book_id = ?";
+            select = connect.prepareStatement(SQL);
+            select.setInt(1, id);
+            ResultSet resultSet = select.executeQuery();
+            if (resultSet.next()) {
+                SQL = "DELETE FROM book WHERE book_id = ?";
+                delete = connect.prepareStatement(SQL);
+                delete.setInt(1, id);
+                delete.executeUpdate();
+                return true;
+            } else {
+                return false;
+            }
+        } catch (SQLException e) {
+            Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+        } finally {
+            try {
+                if (select != null) {
+                    select.close();
+                }
+                if (delete != null) {
+                    delete.close();
+                }
+            } catch (SQLException e) {
+                Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
+            }
+        }
+        return false;
+    }
+
+    public boolean updateUser(User user) {
+        PreparedStatement statement = null;
+        String SQL;
+        try {
+            resetAutoIncrement("user");
+            SQL = "UPDATE user SET password = ?, first_name = ?, last_name = ?, email = ?, address = ?, contact_number = ? WHERE user_id = ?";
+            statement = connect.prepareStatement(SQL);
+            statement.setString(1, user.getPassword());
+            statement.setString(2, user.getFirstName());
+            statement.setString(3, user.getLastName());
+            statement.setString(4, user.getEmail());
+            statement.setString(5, user.getAddress());
+            statement.setString(6, user.getContactNumber());
+            statement.setInt(7, user.getUserId());
+            statement.executeUpdate();
         } catch (SQLException e) {
             Logger.getLogger(Database.class.getName()).log(Level.SEVERE, null, e);
         } finally {

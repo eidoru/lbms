@@ -5,6 +5,7 @@ com\lbms\app\frame\LibrarianJFrame$4.class
 com\lbms\app\frame\LibrarianJFrame$7.class
 com\lbms\app\swing\Logout$1.class
 com\lbms\app\swing\MenuList$1.class
+com\lbms\app\frame\LibrarianJFrame$15.class
 com\lbms\app\swing\MenuList.class
 com\lbms\app\frame\LibrarianJFrame$6.class
 com\lbms\app\swing\ContentPanel.class
@@ -13,7 +14,7 @@ com\lbms\app\frame\LibrarianJFrame$12.class
 com\lbms\app\swing\Table.class
 com\lbms\app\frame\LibrarianJFrame.class
 com\lbms\app\event\MenuItemSelectEvent.class
-com\lbms\app\object\User.class
+com\lbms\app\frame\LibrarianJFrame$16.class
 com\lbms\app\Main.class
 com\lbms\app\swing\Table$1.class
 com\lbms\app\frame\LibrarianJFrame$3.class

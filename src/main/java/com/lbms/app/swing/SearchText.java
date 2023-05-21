@@ -24,5 +24,4 @@ public class SearchText extends JTextField {
         graphics.setFont(new Font("SF Pro Text Light", 0, 12));
         graphics.drawString("Search here...", getInsets().left, getHeight() / 2 + graphics.getFontMetrics().getAscent() / 2 - 2);
     }
-    
 }

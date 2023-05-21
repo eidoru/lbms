@@ -1,5 +1,5 @@
 package com.lbms.app.event;
 
-public interface LogoutSelectEvent {
+public interface OnLogoutEvent {
     public void selected(boolean selected);
 }

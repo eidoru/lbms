@@ -1,6 +1,5 @@
 package com.lbms.app.swing;
 
-import com.lbms.app.event.MenuItemSelectEvent;
 import com.lbms.app.object.MenuModel;
 import java.awt.Component;
 import java.awt.event.MouseAdapter;
@@ -10,10 +9,11 @@ import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.ListCellRenderer;
 import javax.swing.SwingUtilities;
+import com.lbms.app.event.OnMenuItemSelectEvent;
 
 public class MenuList<E extends Object> extends JList<E> {
     
-    private MenuItemSelectEvent event;
+    private OnMenuItemSelectEvent event;
     private final DefaultListModel model;
     private int selectedIndex = 0;
     
@@ -29,7 +29,7 @@ public class MenuList<E extends Object> extends JList<E> {
         });
     }
     
-    public void onMenuItemSelect(MenuItemSelectEvent event) {
+    public void onMenuItemSelect(OnMenuItemSelectEvent event) {
         this.event = event;
     }
     

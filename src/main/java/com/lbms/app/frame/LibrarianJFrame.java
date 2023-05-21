@@ -1,56 +1,106 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
- */
 package com.lbms.app.frame;
 
 import com.lbms.app.database.Database;
+import com.lbms.app.event.OnSearchEvent;
 import com.lbms.app.object.Book;
 import com.lbms.app.object.Borrow;
+import com.lbms.app.object.Overdue;
 import com.lbms.app.object.Request;
 import com.lbms.app.object.User;
+import com.lbms.app.swing.SearchBar;
+import com.lbms.app.swing.Table;
 import java.awt.CardLayout;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.event.ListSelectionEvent;
 import javax.swing.table.DefaultTableModel;
 
-/**
- *
- * @author Eidoru
- */
 public final class LibrarianJFrame extends javax.swing.JFrame {
 
     private DefaultTableModel model;
     private final Database database;
     private static int loggedId;
-    
+
     public LibrarianJFrame(int userId) {
         loggedId = userId;
         database = new Database();
 
         // init methods
         initComponents();
-        initTables();
+        viewUserTable();
 
         // init events
         onMenuItemSelect();
         onLogoutSelect();
 
-        // init id listeners
+        // listeners
         userIdField.setText(String.valueOf(database.getTableId("user", "user_id")));
         bookIdField.setText(String.valueOf(database.getTableId("book", "book_id")));
+        rowSelectionListener(userTable, bookTable, borrowTable, requestTable); // listens when row is selected
+        onSearchListener(userSearchBar, bookSearchBar, borrowSearchBar, requestSearchBar);
 
         // checks for filled fields to enable add button
-        bindTextFields(addUserButton, passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
-        bindTextFields(addBookButton, titleField, authorField, isbnField);
+        textFieldsListener(addUserButton, passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
+        textFieldsListener(addBookButton, titleField, authorField, isbnField);
         System.out.println(loggedId);
     }
 
-    public void bindTextFields(JButton button, JTextField... textFields) {
+    public void onSearchListener(SearchBar... searchBars) {
+        for (SearchBar searchBar : searchBars) {
+            searchBar.setSearchEvent(() -> {
+                if (searchBar.equals(userSearchBar)) {
+                    System.out.println("Card 1");
+                }
+                if (searchBar.equals(bookSearchBar)) {
+                    System.out.println("Card 2");
+                }
+                if (searchBar.equals(borrowSearchBar)) {
+                    System.out.println("Card 3");
+                }
+                if (searchBar.equals(requestSearchBar)) {
+                    System.out.println("Card 4");
+                }
+            });
+        }
+    }
+
+    public void rowSelectionListener(Table... tables) {
+        for (Table table : tables) {
+            table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
+                int selectedRow = table.getSelectedRow();
+                if (table.equals(userTable) && selectedRow >= 0) {
+                    userRemoveButton.setEnabled(true);
+                } else {
+                    userRemoveButton.setEnabled(false);
+                }
+                if (table.equals(bookTable) && selectedRow >= 0) {
+                    bookRemoveButton.setEnabled(true);
+                } else {
+                    bookRemoveButton.setEnabled(false);
+                }
+                if (table.equals(borrowTable) && selectedRow >= 0) {
+                    borrowReturnButton.setEnabled(true);
+                } else {
+                    borrowReturnButton.setEnabled(false);
+                }
+                if (table.equals(requestTable) && selectedRow >= 0) {
+                    requestApproveButton.setEnabled(true);
+                    requestRejectButton.setEnabled(true);
+                } else {
+                    requestApproveButton.setEnabled(false);
+                    requestRejectButton.setEnabled(false);
+                }
+            });
+        }
+    }
+
+    public void textFieldsListener(JButton button, JTextField... textFields) {
         for (JTextField textField : textFields) {
             textField.getDocument().addDocumentListener(new DocumentListener() {
                 @Override
@@ -82,15 +132,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         }
     }
 
-//    public boolean checkEmptyFields(JTextField... textFields) {
-//        for (JTextField textField : textFields) {
-//            if (textField.getText().isEmpty()) {
-//                JOptionPane.showMessageDialog(null, "Please enter the remaining fields!");
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
     public void emptyFields(JTextField... textFields) {
         for (JTextField textField : textFields) {
             if (textField.equals(userIdField)) {
@@ -116,25 +157,31 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         menu.onMenuItemSelect((int index) -> {
             switch (index) {
-                case 0 ->
+                case 0 -> {
                     cardLayout.show(contentPanel, "card1");  // users
-                case 1 ->
+                    viewUserTable();
+                }
+                case 1 -> {
                     cardLayout.show(contentPanel, "card2");  // books
-                case 2 ->
+                    viewBookTable();
+                }
+                case 2 -> {
                     cardLayout.show(contentPanel, "card3");  // borrowers
-                case 3 ->
+                    viewBorrowTable();
+                }
+                case 3 -> {
                     cardLayout.show(contentPanel, "card4");  // requests
-                case 4 ->
-                    cardLayout.show(contentPanel, "card5");   // profile
+                    viewRequestTable();
+                }
+                case 4 -> {
+                    cardLayout.show(contentPanel, "card5");   // overdues
+                    viewOverdueTable();
+                }
+                case 5 -> {
+                    cardLayout.show(contentPanel, "card6"); // profile
+                }
             }
         });
-    }
-
-    public void initTables() {
-        viewUserTable();
-        viewBookTable();
-        viewRequestTable();
-        viewBorrowTable();
     }
 
     public void viewUserTable() {
@@ -194,7 +241,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         if (requests == null) {
             return;
         }
-        Object[] object = new Object[5];
+        Object[] object = new Object[requests.size()];
         for (Request request : requests) {
             object[0] = request.getId();
             object[1] = request.getBookTitle();
@@ -212,7 +259,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         if (borrowers == null) {
             return;
         }
-        Object[] object = new Object[7];
+        Object[] object = new Object[borrowers.size()];
         for (Borrow borrow : borrowers) {
             object[0] = borrow.getId();
             object[1] = borrow.getBookTitle();
@@ -225,44 +272,97 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         }
     }
 
-    /**
-     * This method is called from within the constructor to initialize the form.
-     * WARNING: Do NOT modify this code. The content of this method is always
-     * regenerated by the Form Editor.
-     */
+    public void viewOverdueTable() {
+        model = (DefaultTableModel) overdueTable.getModel();
+        model.setRowCount(0);
+        ArrayList<Overdue> overdues = database.getOverdues();
+        if (overdues == null) {
+            return;
+        }
+        Object[] object = new Object[5];
+        for (Overdue overdue : overdues) {
+            System.out.println("Hello");
+            object[0] = overdue.getOverdueId();
+            object[1] = overdue.getBookTitle();
+            object[2] = overdue.getUserFirstName();
+            object[3] = overdue.getUserLastName();
+            object[4] = overdue.getFine();
+            model.addRow(object);
+        }
+    }
+    
+    private void updateAttribute(User user, String attributeName, String attributeValue) {
+    switch (attributeName) {
+        case "password":
+            user.setPassword(attributeValue);
+            break;
+        case "firstName":
+            user.setFirstName(attributeValue);
+            break;
+        case "lastName":
+            user.setLastName(attributeValue);
+            break;
+        case "email":
+            user.setEmail(attributeValue);
+            break;
+        case "address":
+            user.setAddress(attributeValue);
+        case "contactNumber":
+            user.setContactNumber(attributeValue);
+    }
+}
+
     @SuppressWarnings("unchecked")
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
         buttonGroup1 = new javax.swing.ButtonGroup();
-        card2AddUser1 = new javax.swing.JButton();
         mainPanel = new javax.swing.JPanel();
-        menu = new com.lbms.app.swing.Menu();
+        menu = new com.lbms.app.swing.Menu(database.getCurrentUser(loggedId).getUserType());
         contentPanel = new com.lbms.app.swing.ContentPanel();
         card1 = new com.lbms.app.swing.ContentPanel();
-        card1Search = new com.lbms.app.swing.SearchBar();
-        card1AddUser = new javax.swing.JButton();
-        card1RemoveUser = new javax.swing.JButton();
+        userSearchBar = new com.lbms.app.swing.SearchBar();
+        userAddButton = new javax.swing.JButton();
+        userRemoveButton = new javax.swing.JButton();
         userScrollPane = new javax.swing.JScrollPane();
         userTable = new com.lbms.app.swing.Table();
         card2 = new com.lbms.app.swing.ContentPanel();
-        card2Search = new com.lbms.app.swing.SearchBar();
-        card2AddBook = new javax.swing.JButton();
-        card2RemoveBook = new javax.swing.JButton();
+        bookSearchBar = new com.lbms.app.swing.SearchBar();
+        bookAddButton = new javax.swing.JButton();
+        bookRemoveButton = new javax.swing.JButton();
         bookScrollPane = new javax.swing.JScrollPane();
         bookTable = new com.lbms.app.swing.Table();
         card3 = new com.lbms.app.swing.ContentPanel();
-        card3Search = new com.lbms.app.swing.SearchBar();
-        card3ReturnBook = new javax.swing.JButton();
+        borrowSearchBar = new com.lbms.app.swing.SearchBar();
+        borrowReturnButton = new javax.swing.JButton();
         borrowScrollPane = new javax.swing.JScrollPane();
         borrowTable = new com.lbms.app.swing.Table();
         card4 = new com.lbms.app.swing.ContentPanel();
-        card4Search = new com.lbms.app.swing.SearchBar();
-        card4ApproveRequestButton = new javax.swing.JButton();
-        card4RejectRequestButton = new javax.swing.JButton();
+        requestSearchBar = new com.lbms.app.swing.SearchBar();
+        requestApproveButton = new javax.swing.JButton();
+        requestRejectButton = new javax.swing.JButton();
         requestScrollPane = new javax.swing.JScrollPane();
         requestTable = new com.lbms.app.swing.Table();
-        card_useradd = new com.lbms.app.swing.ContentPanel();
+        card5 = new com.lbms.app.swing.ContentPanel();
+        overdueSearchBar = new com.lbms.app.swing.SearchBar();
+        overdueScrollPane = new javax.swing.JScrollPane();
+        overdueTable = new com.lbms.app.swing.Table();
+        overdueButton = new javax.swing.JButton();
+        card6 = new com.lbms.app.swing.ContentPanel();
+        profileConfirmButton = new javax.swing.JButton();
+        passwordEditLabel = new javax.swing.JLabel();
+        passwordEditField = new javax.swing.JPasswordField();
+        firstNameEditLabel = new javax.swing.JLabel();
+        firstNameEditField = new javax.swing.JTextField();
+        lastNameEditLabel = new javax.swing.JLabel();
+        lastNameEditField = new javax.swing.JTextField();
+        emailEditLabel = new javax.swing.JLabel();
+        emailEditField = new javax.swing.JTextField();
+        addressEditLabel = new javax.swing.JLabel();
+        addressEditField = new javax.swing.JTextField();
+        contactEditLabel = new javax.swing.JLabel();
+        contactEditField = new javax.swing.JTextField();
+        userAddPanel = new com.lbms.app.swing.ContentPanel();
         userIdLabel = new javax.swing.JLabel();
         userIdField = new javax.swing.JTextField();
         passwordLabel = new javax.swing.JLabel();
@@ -286,7 +386,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         librarianRadioButton = new javax.swing.JRadioButton();
         addUserButton = new javax.swing.JButton();
         cancelUserButton = new javax.swing.JButton();
-        card_bookadd = new com.lbms.app.swing.ContentPanel();
+        bookAddPanel = new com.lbms.app.swing.ContentPanel();
         bookIdLabel = new javax.swing.JLabel();
         bookIdField = new javax.swing.JTextField();
         titleLabel = new javax.swing.JLabel();
@@ -298,36 +398,28 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         addBookButton = new javax.swing.JButton();
         cancelBookButton = new javax.swing.JButton();
 
-        card2AddUser1.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card2AddUser1.setText("Add User");
-        card2AddUser1.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card2AddUser1ActionPerformed(evt);
-            }
-        });
-
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         mainPanel.setBackground(new java.awt.Color(48, 51, 54));
 
         contentPanel.setLayout(new java.awt.CardLayout());
 
-        card1Search.setBackground(new java.awt.Color(70, 73, 75));
+        userSearchBar.setBackground(new java.awt.Color(70, 73, 75));
 
-        card1AddUser.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card1AddUser.setText("Add User");
-        card1AddUser.addActionListener(new java.awt.event.ActionListener() {
+        userAddButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        userAddButton.setText("ADD USER ACCOUNT");
+        userAddButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card1AddUserActionPerformed(evt);
+                userAddButtonActionPerformed(evt);
             }
         });
 
-        card1RemoveUser.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card1RemoveUser.setText("Remove User");
-        card1RemoveUser.setEnabled(false);
-        card1RemoveUser.addActionListener(new java.awt.event.ActionListener() {
+        userRemoveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        userRemoveButton.setText("REMOVE USER ACCOUNT");
+        userRemoveButton.setEnabled(false);
+        userRemoveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card1RemoveUserActionPerformed(evt);
+                userRemoveButtonActionPerformed(evt);
             }
         });
 
@@ -351,17 +443,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         userTable.setToolTipText("");
         userTable.setGridColor(new java.awt.Color(97, 99, 101));
         userScrollPane.setViewportView(userTable);
-        if (userTable.getColumnModel().getColumnCount() > 0) {
-            userTable.getColumnModel().getColumn(0).setResizable(false);
-            userTable.getColumnModel().getColumn(1).setResizable(false);
-            userTable.getColumnModel().getColumn(2).setResizable(false);
-            userTable.getColumnModel().getColumn(3).setResizable(false);
-            userTable.getColumnModel().getColumn(4).setResizable(false);
-            userTable.getColumnModel().getColumn(5).setResizable(false);
-            userTable.getColumnModel().getColumn(6).setResizable(false);
-            userTable.getColumnModel().getColumn(7).setResizable(false);
-            userTable.getColumnModel().getColumn(8).setResizable(false);
-        }
 
         javax.swing.GroupLayout card1Layout = new javax.swing.GroupLayout(card1);
         card1.setLayout(card1Layout);
@@ -371,46 +452,46 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, card1Layout.createSequentialGroup()
-                        .addComponent(card1AddUser, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(userAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(25, 25, 25)
-                        .addComponent(card1RemoveUser, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(userRemoveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, Short.MAX_VALUE))
                     .addComponent(userScrollPane, javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(card1Search, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, 950, Short.MAX_VALUE))
+                    .addComponent(userSearchBar, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addGap(25, 25, 25))
         );
         card1Layout.setVerticalGroup(
             card1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card1Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(card1Search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(userSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
                 .addComponent(userScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
                 .addGroup(card1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(card1AddUser, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(card1RemoveUser, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(userAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(userRemoveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
         contentPanel.add(card1, "card1");
 
-        card2Search.setBackground(new java.awt.Color(70, 73, 75));
+        bookSearchBar.setBackground(new java.awt.Color(70, 73, 75));
 
-        card2AddBook.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card2AddBook.setText("Add Book");
-        card2AddBook.addActionListener(new java.awt.event.ActionListener() {
+        bookAddButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        bookAddButton.setText("ADD BOOK");
+        bookAddButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card2AddBookActionPerformed(evt);
+                bookAddButtonActionPerformed(evt);
             }
         });
 
-        card2RemoveBook.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card2RemoveBook.setText("Remove Book");
-        card2RemoveBook.setEnabled(false);
-        card2RemoveBook.addActionListener(new java.awt.event.ActionListener() {
+        bookRemoveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        bookRemoveButton.setText("REMOVE BOOK");
+        bookRemoveButton.setEnabled(false);
+        bookRemoveButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card2RemoveBookActionPerformed(evt);
+                bookRemoveButtonActionPerformed(evt);
             }
         });
 
@@ -431,13 +512,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
         bookScrollPane.setViewportView(bookTable);
-        if (bookTable.getColumnModel().getColumnCount() > 0) {
-            bookTable.getColumnModel().getColumn(0).setResizable(false);
-            bookTable.getColumnModel().getColumn(1).setResizable(false);
-            bookTable.getColumnModel().getColumn(2).setResizable(false);
-            bookTable.getColumnModel().getColumn(3).setResizable(false);
-            bookTable.getColumnModel().getColumn(4).setResizable(false);
-        }
 
         javax.swing.GroupLayout card2Layout = new javax.swing.GroupLayout(card2);
         card2.setLayout(card2Layout);
@@ -447,39 +521,40 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(card2Layout.createSequentialGroup()
-                        .addComponent(card2AddBook, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(bookAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(25, 25, 25)
-                        .addComponent(card2RemoveBook, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(bookRemoveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(card2Layout.createSequentialGroup()
                         .addGroup(card2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(bookScrollPane)
-                            .addComponent(card2Search, javax.swing.GroupLayout.DEFAULT_SIZE, 950, Short.MAX_VALUE))
+                            .addComponent(bookSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(25, 25, 25))))
         );
         card2Layout.setVerticalGroup(
             card2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card2Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(card2Search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(bookSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
                 .addComponent(bookScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
                 .addGroup(card2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(card2AddBook, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(card2RemoveBook, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(bookAddButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(bookRemoveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
         contentPanel.add(card2, "card2");
 
-        card3Search.setBackground(new java.awt.Color(70, 73, 75));
+        borrowSearchBar.setBackground(new java.awt.Color(70, 73, 75));
 
-        card3ReturnBook.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card3ReturnBook.setText("Return Book");
-        card3ReturnBook.addActionListener(new java.awt.event.ActionListener() {
+        borrowReturnButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        borrowReturnButton.setText("RETURN BOOK");
+        borrowReturnButton.setEnabled(false);
+        borrowReturnButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                card3ReturnBookActionPerformed(evt);
+                borrowReturnButtonActionPerformed(evt);
             }
         });
 
@@ -500,15 +575,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
         borrowScrollPane.setViewportView(borrowTable);
-        if (borrowTable.getColumnModel().getColumnCount() > 0) {
-            borrowTable.getColumnModel().getColumn(0).setResizable(false);
-            borrowTable.getColumnModel().getColumn(1).setResizable(false);
-            borrowTable.getColumnModel().getColumn(2).setResizable(false);
-            borrowTable.getColumnModel().getColumn(3).setResizable(false);
-            borrowTable.getColumnModel().getColumn(4).setResizable(false);
-            borrowTable.getColumnModel().getColumn(5).setResizable(false);
-            borrowTable.getColumnModel().getColumn(6).setResizable(false);
-        }
 
         javax.swing.GroupLayout card3Layout = new javax.swing.GroupLayout(card3);
         card3.setLayout(card3Layout);
@@ -518,37 +584,37 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(card3Layout.createSequentialGroup()
-                        .addComponent(card3ReturnBook, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(card3Layout.createSequentialGroup()
                         .addGroup(card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(borrowScrollPane)
-                            .addComponent(card3Search, javax.swing.GroupLayout.DEFAULT_SIZE, 950, Short.MAX_VALUE))
+                            .addComponent(borrowSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                         .addGap(25, 25, 25))))
         );
         card3Layout.setVerticalGroup(
             card3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card3Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(card3Search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(borrowSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
-                .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 611, Short.MAX_VALUE)
+                .addComponent(borrowScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
-                .addComponent(card3ReturnBook, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(borrowReturnButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25))
         );
 
         contentPanel.add(card3, "card3");
 
-        card4Search.setBackground(new java.awt.Color(70, 73, 75));
+        requestSearchBar.setBackground(new java.awt.Color(70, 73, 75));
 
-        card4ApproveRequestButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card4ApproveRequestButton.setText("Approve Request");
-        card4ApproveRequestButton.setEnabled(false);
+        requestApproveButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        requestApproveButton.setText("APPROVE REQUEST");
+        requestApproveButton.setEnabled(false);
 
-        card4RejectRequestButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
-        card4RejectRequestButton.setText("Reject Request");
-        card4RejectRequestButton.setEnabled(false);
+        requestRejectButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        requestRejectButton.setText("REJECT REQUEST");
+        requestRejectButton.setEnabled(false);
 
         requestTable.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -567,13 +633,6 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
         requestScrollPane.setViewportView(requestTable);
-        if (requestTable.getColumnModel().getColumnCount() > 0) {
-            requestTable.getColumnModel().getColumn(0).setResizable(false);
-            requestTable.getColumnModel().getColumn(1).setResizable(false);
-            requestTable.getColumnModel().getColumn(2).setResizable(false);
-            requestTable.getColumnModel().getColumn(3).setResizable(false);
-            requestTable.getColumnModel().getColumn(4).setResizable(false);
-        }
 
         javax.swing.GroupLayout card4Layout = new javax.swing.GroupLayout(card4);
         card4.setLayout(card4Layout);
@@ -583,63 +642,211 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25)
                 .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(card4Layout.createSequentialGroup()
-                        .addComponent(card4ApproveRequestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(25, 25, 25)
-                        .addComponent(card4RejectRequestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                         .addComponent(requestScrollPane)
-                        .addComponent(card4Search, javax.swing.GroupLayout.DEFAULT_SIZE, 950, Short.MAX_VALUE)))
+                        .addComponent(requestSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGap(25, 25, 25))
         );
         card4Layout.setVerticalGroup(
             card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(card4Layout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addComponent(card4Search, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addComponent(requestSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(25, 25, 25)
                 .addComponent(requestScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
                 .addGap(25, 25, 25)
                 .addGroup(card4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(card4ApproveRequestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(card4RejectRequestButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(requestApproveButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(requestRejectButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(25, 25, 25))
         );
 
         contentPanel.add(card4, "card4");
 
+        overdueSearchBar.setBackground(new java.awt.Color(70, 73, 75));
+
+        overdueTable.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "Overdue ID", "Book Title", "First Name", "Last Name", "Fine"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false, false, false, false, false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        overdueScrollPane.setViewportView(overdueTable);
+
+        overdueButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        overdueButton.setText("SETTLE FINE");
+
+        javax.swing.GroupLayout card5Layout = new javax.swing.GroupLayout(card5);
+        card5.setLayout(card5Layout);
+        card5Layout.setHorizontalGroup(
+            card5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card5Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addGroup(card5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(card5Layout.createSequentialGroup()
+                        .addComponent(overdueButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(overdueSearchBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(overdueScrollPane))
+                .addGap(25, 25, 25))
+        );
+        card5Layout.setVerticalGroup(
+            card5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card5Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(overdueSearchBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25)
+                .addComponent(overdueScrollPane, javax.swing.GroupLayout.DEFAULT_SIZE, 610, Short.MAX_VALUE)
+                .addGap(25, 25, 25)
+                .addComponent(overdueButton, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25))
+        );
+
+        contentPanel.add(card5, "card5");
+
+        profileConfirmButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        profileConfirmButton.setText("UPDATE");
+        profileConfirmButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                profileConfirmButtonActionPerformed(evt);
+            }
+        });
+
+        passwordEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        passwordEditLabel.setText("Password");
+
+        firstNameEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        firstNameEditLabel.setText("First Name");
+
+        lastNameEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        lastNameEditLabel.setText("Last Name");
+
+        emailEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        emailEditLabel.setText("Email Address");
+
+        addressEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        addressEditLabel.setText("Address");
+
+        contactEditLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        contactEditLabel.setText("Contact Number");
+
+        javax.swing.GroupLayout card6Layout = new javax.swing.GroupLayout(card6);
+        card6.setLayout(card6Layout);
+        card6Layout.setHorizontalGroup(
+            card6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card6Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addGroup(card6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(addressEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(emailEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(emailEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lastNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(lastNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(firstNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(firstNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(passwordEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap(675, Short.MAX_VALUE))
+        );
+        card6Layout.setVerticalGroup(
+            card6Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(card6Layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(passwordEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(passwordEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(firstNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(firstNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(lastNameEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(lastNameEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(emailEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(emailEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(addressEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(addressEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(contactEditLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(10, 10, 10)
+                .addComponent(contactEditField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 301, Short.MAX_VALUE)
+                .addComponent(profileConfirmButton, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(25, 25, 25))
+        );
+
+        contentPanel.add(card6, "card6");
+
+        userIdLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         userIdLabel.setText("User ID (System Generated)");
 
         userIdField.setEnabled(false);
 
+        passwordLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         passwordLabel.setText("Password");
 
-        firstNameLabel.setText("First name");
+        firstNameLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        firstNameLabel.setText("First Name");
 
-        lastNameLabel.setText("Last name");
+        lastNameLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        lastNameLabel.setText("Last Name");
 
-        emailLabel.setText("Email address");
+        emailLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        emailLabel.setText("Email Address");
 
+        addressLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addressLabel.setText("Address");
 
-        contactLabel.setText("Contact number");
+        contactLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
+        contactLabel.setText("Contact Number");
 
+        courseLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         courseLabel.setText("Course");
 
+        courseCombo.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         courseCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "None", "BSCS", "BSIT" }));
 
+        yearLevelLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         yearLevelLabel.setText("Year level");
 
+        yearLevelCombo.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         yearLevelCombo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "None", "1", "2", "3", "4" }));
 
+        userTypeLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         userTypeLabel.setText("User Type");
 
         buttonGroup1.add(studentRadioButton);
+        studentRadioButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         studentRadioButton.setSelected(true);
         studentRadioButton.setText("Student");
 
         buttonGroup1.add(librarianRadioButton);
+        librarianRadioButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         librarianRadioButton.setText("Librarian");
 
+        addUserButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addUserButton.setText("ADD");
         addUserButton.setEnabled(false);
         addUserButton.addActionListener(new java.awt.event.ActionListener() {
@@ -648,6 +855,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
 
+        cancelUserButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         cancelUserButton.setText("CANCEL");
         cancelUserButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -655,16 +863,16 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout card_useraddLayout = new javax.swing.GroupLayout(card_useradd);
-        card_useradd.setLayout(card_useraddLayout);
-        card_useraddLayout.setHorizontalGroup(
-            card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card_useraddLayout.createSequentialGroup()
+        javax.swing.GroupLayout userAddPanelLayout = new javax.swing.GroupLayout(userAddPanel);
+        userAddPanel.setLayout(userAddPanelLayout);
+        userAddPanelLayout.setHorizontalGroup(
+            userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(userAddPanelLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(addUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(cancelUserButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(card_useraddLayout.createSequentialGroup()
+                    .addGroup(userAddPanelLayout.createSequentialGroup()
                         .addComponent(studentRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(0, 0, 0)
                         .addComponent(librarianRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -683,19 +891,19 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                     .addComponent(passwordLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(userIdField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(userIdLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addGroup(card_useraddLayout.createSequentialGroup()
-                        .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(userAddPanelLayout.createSequentialGroup()
+                        .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(courseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(yearLevelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 150, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addGap(10, 10, 10)
-                        .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                        .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(yearLevelCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE)
                             .addComponent(courseCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 140, javax.swing.GroupLayout.PREFERRED_SIZE))))
                 .addContainerGap(675, Short.MAX_VALUE))
         );
-        card_useraddLayout.setVerticalGroup(
-            card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card_useraddLayout.createSequentialGroup()
+        userAddPanelLayout.setVerticalGroup(
+            userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(userAddPanelLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addComponent(userIdLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
@@ -725,17 +933,17 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(10, 10, 10)
                 .addComponent(contactField, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
-                .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(courseLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(courseCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
-                .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(yearLevelLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(yearLevelCombo, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(10, 10, 10)
                 .addComponent(userTypeLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
-                .addGroup(card_useraddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGroup(userAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(studentRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(librarianRadioButton, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 40, Short.MAX_VALUE)
@@ -745,18 +953,23 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25))
         );
 
-        contentPanel.add(card_useradd, "card_useradd");
+        contentPanel.add(userAddPanel, "card_useradd");
 
+        bookIdLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         bookIdLabel.setText("Book ID (System Generated)");
 
         bookIdField.setEnabled(false);
 
+        titleLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         titleLabel.setText("Title");
 
+        authorLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         authorLabel.setText("Author");
 
+        isbnLabel.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         isbnLabel.setText("ISBN");
 
+        addBookButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         addBookButton.setText("ADD");
         addBookButton.setEnabled(false);
         addBookButton.addActionListener(new java.awt.event.ActionListener() {
@@ -765,6 +978,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
 
+        cancelBookButton.setFont(new java.awt.Font("SF Pro Text Light", 0, 12)); // NOI18N
         cancelBookButton.setText("CANCEL");
         cancelBookButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -772,13 +986,13 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             }
         });
 
-        javax.swing.GroupLayout card_bookaddLayout = new javax.swing.GroupLayout(card_bookadd);
-        card_bookadd.setLayout(card_bookaddLayout);
-        card_bookaddLayout.setHorizontalGroup(
-            card_bookaddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card_bookaddLayout.createSequentialGroup()
+        javax.swing.GroupLayout bookAddPanelLayout = new javax.swing.GroupLayout(bookAddPanel);
+        bookAddPanel.setLayout(bookAddPanelLayout);
+        bookAddPanelLayout.setHorizontalGroup(
+            bookAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(bookAddPanelLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
-                .addGroup(card_bookaddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(bookAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(cancelBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(addBookButton, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(isbnField, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -791,9 +1005,9 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                     .addComponent(bookIdLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 300, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(675, Short.MAX_VALUE))
         );
-        card_bookaddLayout.setVerticalGroup(
-            card_bookaddLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(card_bookaddLayout.createSequentialGroup()
+        bookAddPanelLayout.setVerticalGroup(
+            bookAddPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(bookAddPanelLayout.createSequentialGroup()
                 .addGap(25, 25, 25)
                 .addComponent(bookIdLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 25, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(10, 10, 10)
@@ -817,21 +1031,21 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                 .addGap(25, 25, 25))
         );
 
-        contentPanel.add(card_bookadd, "card_bookadd");
+        contentPanel.add(bookAddPanel, "card_bookadd");
 
         javax.swing.GroupLayout mainPanelLayout = new javax.swing.GroupLayout(mainPanel);
         mainPanel.setLayout(mainPanelLayout);
         mainPanelLayout.setHorizontalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(mainPanelLayout.createSequentialGroup()
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, mainPanelLayout.createSequentialGroup()
                 .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(0, 0, 0)
-                .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
         mainPanelLayout.setVerticalGroup(
             mainPanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(contentPanel, javax.swing.GroupLayout.PREFERRED_SIZE, 0, Short.MAX_VALUE)
-            .addComponent(menu, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(menu, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+            .addComponent(contentPanel, javax.swing.GroupLayout.DEFAULT_SIZE, 0, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -842,16 +1056,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(mainPanel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addComponent(mainPanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
         setLocationRelativeTo(null);
     }// </editor-fold>//GEN-END:initComponents
-
-    private void card2AddUser1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card2AddUser1ActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_card2AddUser1ActionPerformed
 
     private void cancelBookButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_cancelBookButtonActionPerformed
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
@@ -873,7 +1083,7 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
             JOptionPane.showMessageDialog(null, "Please select a course and year!");
             return;
         }
-        
+
         if (librarianRadioButton.isSelected() && (!courseCombo.getSelectedItem().toString().equals("None") || !yearLevelCombo.getSelectedItem().toString().equals("None"))) {
             JOptionPane.showMessageDialog(null, "Choose 'None' and '0' for both course and year for librarian!");
             return;
@@ -898,43 +1108,83 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
         emptyFields(passwordField, firstNameField, lastNameField, emailField, addressField, contactField);
     }//GEN-LAST:event_addUserButtonActionPerformed
 
-    private void card2RemoveBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card2RemoveBookActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_card2RemoveBookActionPerformed
+    private void bookRemoveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bookRemoveButtonActionPerformed
+        int index = bookTable.getSelectedRow();
+        int bookId = Integer.parseInt(bookTable.getValueAt(index, 0).toString());
 
-    private void card2AddBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card2AddBookActionPerformed
+        if (database.deleteBook(bookId)) {
+            JOptionPane.showMessageDialog(null, "Book has been deleted!");
+        }
+
+        bookRemoveButton.setEnabled(false); // set enable to false once row is deleted
+        viewBookTable();
+    }//GEN-LAST:event_bookRemoveButtonActionPerformed
+
+    private void bookAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_bookAddButtonActionPerformed
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         cardLayout.show(contentPanel, "card_bookadd");
-    }//GEN-LAST:event_card2AddBookActionPerformed
+    }//GEN-LAST:event_bookAddButtonActionPerformed
 
-    private void card1RemoveUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card1RemoveUserActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_card1RemoveUserActionPerformed
+    private void userRemoveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userRemoveButtonActionPerformed
+        int index = userTable.getSelectedRow();
+        int userId = Integer.parseInt(userTable.getValueAt(index, 0).toString());
 
-    private void card1AddUserActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card1AddUserActionPerformed
+        if (database.deleteUser(userId)) {
+            JOptionPane.showMessageDialog(null, "User account has been deleted!");
+        }
+
+        userRemoveButton.setEnabled(false); // set enable to false once row is deleted
+        viewUserTable();
+    }//GEN-LAST:event_userRemoveButtonActionPerformed
+
+    private void userAddButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_userAddButtonActionPerformed
         CardLayout cardLayout = (CardLayout) contentPanel.getLayout();
         cardLayout.show(contentPanel, "card_useradd");
-    }//GEN-LAST:event_card1AddUserActionPerformed
+    }//GEN-LAST:event_userAddButtonActionPerformed
 
-    private void card3ReturnBookActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_card3ReturnBookActionPerformed
+    private void borrowReturnButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_borrowReturnButtonActionPerformed
         // TODO add your handling code here:
-    }//GEN-LAST:event_card3ReturnBookActionPerformed
+    }//GEN-LAST:event_borrowReturnButtonActionPerformed
 
     private void addBookButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_addBookButtonActionPerformed
-
         int id = Integer.parseInt(bookIdField.getText());
         String title = titleField.getText();
         String author = authorField.getText();
         String isbn = isbnField.getText();
         int status = 0;
-        
+
         Book book = new Book(id, title, author, isbn, status);
-        
+
         database.insertBook(book);
         bookIdField.setText(Integer.toString(database.getTableId("book", "book_id")));
         JOptionPane.showMessageDialog(null, "Book has been added to the database!");
         emptyFields(titleField, authorField, isbnField);
     }//GEN-LAST:event_addBookButtonActionPerformed
+
+    private void profileConfirmButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_profileConfirmButtonActionPerformed
+        Map<String, JTextField> textFieldMap = new HashMap<>();
+        textFieldMap.put("password", passwordEditField);
+        textFieldMap.put("firstName", firstNameEditField);
+        textFieldMap.put("lastName", lastNameEditField);
+        textFieldMap.put("email", emailEditField);
+        textFieldMap.put("address", addressEditField);
+        textFieldMap.put("contactNumber", contactEditField);
+        
+        User user = database.getCurrentUser(loggedId);
+
+        for (Map.Entry<String, JTextField> entry : textFieldMap.entrySet()) {
+            String attributeName = entry.getKey();
+            JTextField textField = entry.getValue();
+
+            if (!textField.getText().isEmpty()) {
+                updateAttribute(user, attributeName, textField.getText());
+            }
+        }
+        
+        database.updateUser(user);
+        JOptionPane.showMessageDialog(null, "Your profile has been updated!");
+        emptyFields(passwordEditField, firstNameEditField, lastNameEditField, emailEditField, addressEditField, contactEditField);
+    }//GEN-LAST:event_profileConfirmButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -974,63 +1224,81 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton addBookButton;
     private javax.swing.JButton addUserButton;
+    private javax.swing.JTextField addressEditField;
+    private javax.swing.JLabel addressEditLabel;
     private javax.swing.JTextField addressField;
     private javax.swing.JLabel addressLabel;
     private javax.swing.JTextField authorField;
     private javax.swing.JLabel authorLabel;
+    private javax.swing.JButton bookAddButton;
+    private com.lbms.app.swing.ContentPanel bookAddPanel;
     private javax.swing.JTextField bookIdField;
     private javax.swing.JLabel bookIdLabel;
+    private javax.swing.JButton bookRemoveButton;
     private javax.swing.JScrollPane bookScrollPane;
+    private com.lbms.app.swing.SearchBar bookSearchBar;
     private com.lbms.app.swing.Table bookTable;
+    private javax.swing.JButton borrowReturnButton;
     private javax.swing.JScrollPane borrowScrollPane;
+    private com.lbms.app.swing.SearchBar borrowSearchBar;
     private com.lbms.app.swing.Table borrowTable;
     private javax.swing.ButtonGroup buttonGroup1;
     private javax.swing.JButton cancelBookButton;
     private javax.swing.JButton cancelUserButton;
     private com.lbms.app.swing.ContentPanel card1;
-    private javax.swing.JButton card1AddUser;
-    private javax.swing.JButton card1RemoveUser;
-    private com.lbms.app.swing.SearchBar card1Search;
     private com.lbms.app.swing.ContentPanel card2;
-    private javax.swing.JButton card2AddBook;
-    private javax.swing.JButton card2AddUser1;
-    private javax.swing.JButton card2RemoveBook;
-    private com.lbms.app.swing.SearchBar card2Search;
     private com.lbms.app.swing.ContentPanel card3;
-    private javax.swing.JButton card3ReturnBook;
-    private com.lbms.app.swing.SearchBar card3Search;
     private com.lbms.app.swing.ContentPanel card4;
-    private javax.swing.JButton card4ApproveRequestButton;
-    private javax.swing.JButton card4RejectRequestButton;
-    private com.lbms.app.swing.SearchBar card4Search;
-    private com.lbms.app.swing.ContentPanel card_bookadd;
-    private com.lbms.app.swing.ContentPanel card_useradd;
+    private com.lbms.app.swing.ContentPanel card5;
+    private com.lbms.app.swing.ContentPanel card6;
+    private javax.swing.JTextField contactEditField;
+    private javax.swing.JLabel contactEditLabel;
     private javax.swing.JTextField contactField;
     private javax.swing.JLabel contactLabel;
     private com.lbms.app.swing.ContentPanel contentPanel;
     private javax.swing.JComboBox<String> courseCombo;
     private javax.swing.JLabel courseLabel;
+    private javax.swing.JTextField emailEditField;
+    private javax.swing.JLabel emailEditLabel;
     private javax.swing.JTextField emailField;
     private javax.swing.JLabel emailLabel;
+    private javax.swing.JTextField firstNameEditField;
+    private javax.swing.JLabel firstNameEditLabel;
     private javax.swing.JTextField firstNameField;
     private javax.swing.JLabel firstNameLabel;
     private javax.swing.JTextField isbnField;
     private javax.swing.JLabel isbnLabel;
+    private javax.swing.JTextField lastNameEditField;
+    private javax.swing.JLabel lastNameEditLabel;
     private javax.swing.JTextField lastNameField;
     private javax.swing.JLabel lastNameLabel;
     private javax.swing.JRadioButton librarianRadioButton;
     private javax.swing.JPanel mainPanel;
     private com.lbms.app.swing.Menu menu;
+    private javax.swing.JButton overdueButton;
+    private javax.swing.JScrollPane overdueScrollPane;
+    private com.lbms.app.swing.SearchBar overdueSearchBar;
+    private com.lbms.app.swing.Table overdueTable;
+    private javax.swing.JPasswordField passwordEditField;
+    private javax.swing.JLabel passwordEditLabel;
     private javax.swing.JPasswordField passwordField;
     private javax.swing.JLabel passwordLabel;
+    private javax.swing.JButton profileConfirmButton;
+    private javax.swing.JButton requestApproveButton;
+    private javax.swing.JButton requestRejectButton;
     private javax.swing.JScrollPane requestScrollPane;
+    private com.lbms.app.swing.SearchBar requestSearchBar;
     private com.lbms.app.swing.Table requestTable;
     private javax.swing.JRadioButton studentRadioButton;
     private javax.swing.JTextField titleField;
     private javax.swing.JLabel titleLabel;
+    private javax.swing.JButton userAddButton;
+    private com.lbms.app.swing.ContentPanel userAddPanel;
     private javax.swing.JTextField userIdField;
     private javax.swing.JLabel userIdLabel;
+    private javax.swing.JButton userRemoveButton;
     private javax.swing.JScrollPane userScrollPane;
+    private com.lbms.app.swing.SearchBar userSearchBar;
     private com.lbms.app.swing.Table userTable;
     private javax.swing.JLabel userTypeLabel;
     private javax.swing.JComboBox<String> yearLevelCombo;

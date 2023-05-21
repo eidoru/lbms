@@ -1,6 +1,5 @@
 package com.lbms.app.swing;
 
-import com.lbms.app.event.LogoutSelectEvent;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -8,10 +7,11 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.SwingUtilities;
+import com.lbms.app.event.OnLogoutEvent;
 
 public class Logout extends javax.swing.JPanel {
 
-    private LogoutSelectEvent event;
+    private OnLogoutEvent event;
     private boolean selected;
 
     public Logout() {
@@ -32,7 +32,7 @@ public class Logout extends javax.swing.JPanel {
         });
     }
 
-    public void onLogoutSelectEvent(LogoutSelectEvent event) {
+    public void onLogoutSelectEvent(OnLogoutEvent event) {
         this.event = event;
     }
 

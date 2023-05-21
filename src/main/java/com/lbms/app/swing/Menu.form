@@ -39,7 +39,7 @@
           <Group type="102" alignment="0" attributes="0">
               <Component id="container" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" pref="50" max="-2" attributes="0"/>
-              <Component id="menuList" pref="625" max="32767" attributes="0"/>
+              <Component id="menuList" pref="624" max="32767" attributes="0"/>
               <EmptySpace min="-2" pref="10" max="-2" attributes="0"/>
               <Component id="logout" min="-2" max="-2" attributes="0"/>
               <EmptySpace min="-2" max="-2" attributes="0"/>

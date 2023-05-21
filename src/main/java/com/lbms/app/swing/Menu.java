@@ -1,30 +1,44 @@
 package com.lbms.app.swing;
 
-import com.lbms.app.event.LogoutSelectEvent;
-import com.lbms.app.event.MenuItemSelectEvent;
 import com.lbms.app.object.MenuModel;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import com.lbms.app.event.OnMenuItemSelectEvent;
+import com.lbms.app.event.OnLogoutEvent;
 
 public final class Menu extends javax.swing.JPanel {
 
-    private MenuItemSelectEvent menuEvent;
-    private LogoutSelectEvent logoutEvent;
+    private OnMenuItemSelectEvent menuEvent;
+    private OnLogoutEvent logoutEvent;
+    private int userType;
 
     public Menu() {
         initComponents();
         setOpaque(false);
-
-        initMenuItemsForLibrarian();
     }
-    
-    public void onLogoutSelect(LogoutSelectEvent event) {
+
+    public Menu(int userType) {
+        this.userType = userType;
+
+        initComponents();
+
+        switch (userType) {
+            case 0 ->
+                initMenuItemsForStudent();
+            case 1 ->
+                initMenuItemsForLibrarian();
+        }
+
+        setOpaque(false);
+    }
+
+    public void onLogoutSelect(OnLogoutEvent event) {
         logoutEvent = event;
         logout.onLogoutSelectEvent(event);
     }
 
-    public void onMenuItemSelect(MenuItemSelectEvent event) {
+    public void onMenuItemSelect(OnMenuItemSelectEvent event) {
         menuEvent = event;
         menuList.onMenuItemSelect(event);
     }
@@ -34,7 +48,14 @@ public final class Menu extends javax.swing.JPanel {
         menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("borrow", "Borrowers", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("request", "Requests", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("edit_account", "Profile", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("edit_account", "Edit Profile", MenuModel.MenuType.MENU));
+    }
+
+    public void initMenuItemsForStudent() {
+        menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
+        menuList.addItem(new MenuModel("edit_account", "Edit Profile", MenuModel.MenuType.MENU));
     }
 
     @SuppressWarnings("unchecked")
@@ -97,7 +118,7 @@ public final class Menu extends javax.swing.JPanel {
             .addGroup(layout.createSequentialGroup()
                 .addComponent(container, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(50, 50, 50)
-                .addComponent(menuList, javax.swing.GroupLayout.DEFAULT_SIZE, 625, Short.MAX_VALUE)
+                .addComponent(menuList, javax.swing.GroupLayout.DEFAULT_SIZE, 624, Short.MAX_VALUE)
                 .addGap(10, 10, 10)
                 .addComponent(logout, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
