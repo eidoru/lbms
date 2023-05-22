@@ -1058,6 +1058,7 @@ public class Database implements DatabaseMethods {
         }
         return false;
     }
+    
 
     public boolean updateBookStatus(int bookId) {
         PreparedStatement statement = null;

@@ -274,12 +274,12 @@ public final class LibrarianJFrame extends javax.swing.JFrame {
                     viewBorrowTable();
                 }
                 case 4 -> {
-                    cardLayout.show(contentPanel, "card5");   // overdues
-                    viewOverdueTable();
+                    cardLayout.show(contentPanel, "card6");   // overdues
+                    // viewOverdueTable();
                 }
-                case 5 -> {
-                    cardLayout.show(contentPanel, "card6"); // profile
-                }
+//                case 5 -> {
+//                    cardLayout.show(contentPanel, "card6"); // profile
+//                }
             }
         });
     }

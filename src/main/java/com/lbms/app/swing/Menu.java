@@ -49,13 +49,13 @@ public final class Menu extends javax.swing.JPanel {
         menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("request", "Requests", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("borrow", "Borrowers", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
+        // menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("edit_account", "Profile", MenuModel.MenuType.MENU));
     }
 
     public void initMenuItemsForStudent() {
         menuList.addItem(new MenuModel("book", "Books", MenuModel.MenuType.MENU));
-        menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
+        // menuList.addItem(new MenuModel("overdue", "Overdues", MenuModel.MenuType.MENU));
         menuList.addItem(new MenuModel("edit_account", "Profile", MenuModel.MenuType.MENU));
     }
 

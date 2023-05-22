@@ -24,7 +24,7 @@ public final class StudentJFrame extends javax.swing.JFrame {
     public StudentJFrame(int userId) {
         database = new Database();
         loggedId = userId;
-        
+
         setTitle(database.getCurrentUser(userId).getFirstName());
 
         // init methods
@@ -61,13 +61,15 @@ public final class StudentJFrame extends javax.swing.JFrame {
                     viewBookTable();
                 }
                 case 1 -> {
-                    cardLayout.show(contentPanel, "card2");
-                    viewMyOverdueTable();
-                }
-                case 2 -> {
                     cardLayout.show(contentPanel, "card3");
+                    // viewMyOverdueTable();
                     viewMyBorrowTable();
+
                 }
+//                case 2 -> {
+//                    cardLayout.show(contentPanel, "card3");
+//                    viewMyBorrowTable();
+//                }
             }
         });
     }
@@ -563,8 +565,8 @@ public final class StudentJFrame extends javax.swing.JFrame {
         int bookId = Integer.parseInt(bookTable.getValueAt(selectedIndex, 0).toString());
         String title = bookTable.getValueAt(selectedIndex, 1).toString();
         String author = bookTable.getValueAt(selectedIndex, 2).toString();
-        
-        if (database.hasUserMadeRequest(loggedId, "request", bookId) || database.hasUserMadeRequest(loggedId, "reserve", bookId)) {
+
+        if (database.hasUserMadeRequest(loggedId, "request", bookId) || database.hasUserMadeRequest(loggedId, "reserve", bookId) || database.hasUserMadeRequest(loggedId, "borrow", bookId)) {
             JOptionPane.showMessageDialog(null, "You already have a pending request!");
             return;
         }

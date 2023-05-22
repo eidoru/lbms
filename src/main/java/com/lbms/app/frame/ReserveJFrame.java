@@ -196,6 +196,10 @@ public final class ReserveJFrame extends javax.swing.JFrame {
 
     private void reserveButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_reserveButtonActionPerformed
         int duration = Integer.parseInt(durationField.getText());
+        if (duration < 1) {
+            JOptionPane.showMessageDialog(this, "Please input more than a day!.");
+            return;
+        }
         int response = JOptionPane.showConfirmDialog(this, "Confirm Book Reservation?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         if (response == JOptionPane.YES_OPTION) {
             database.sendBookReservation(bookId, userId, duration);
